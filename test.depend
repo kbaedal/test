@@ -1,0 +1,440 @@
+# depslib dependency file v1.0
+1456330030 source:c:\prog\test\main.cpp
+	<iostream>
+	<string>
+	<mysql.h>
+	"cosas.h"
+
+1455279979 c:\prog\test\utiles.h
+	<string>
+	<vector>
+
+1455884569 source:c:\prog\test\utiles.cpp
+	<cstdio>
+	<cstdlib>
+	<cstring>
+	<cmath>
+	<iostream>
+	<iomanip>
+	<fstream>
+	<sstream>
+	<string>
+	"utiles.h"
+
+1392310381 c:\prog\wxgui\utiles\utiles.h
+
+1392313202 source:c:\prog\wxgui\utiles\utiles.cpp
+	<cstdio>
+	<cstdlib>
+	<cstring>
+	<cmath>
+	<iostream>
+	<fstream>
+	<sstream>
+	"utiles.h"
+
+1456331759 source:c:\prog\test\cosas.cpp
+	<cstdio>
+	<cstdlib>
+	<cstring>
+	<cmath>
+	<iostream>
+	<fstream>
+	<sstream>
+	<string>
+	<vector>
+	<mysql.h>
+	"utiles.h"
+	"cosas.h"
+	"cliente.h"
+
+1453950762 c:\libs\mysql\include\mysql.h
+	<standards.h>
+	<sys/types.h>
+	"mysql_version.h"
+	"mysql_com.h"
+	"mysql_time.h"
+	"my_list.h"
+	"typelib.h"
+	"my_alloc.h"
+
+1453952526 c:\libs\mysql\include\mysql_version.h
+	<custom_conf.h>
+
+1453950762 c:\libs\mysql\include\mysql_com.h
+
+1453950762 c:\libs\mysql\include\mysql_time.h
+
+1453950762 c:\libs\mysql\include\my_list.h
+
+1453950762 c:\libs\mysql\include\typelib.h
+	"my_alloc.h"
+
+1453950762 c:\libs\mysql\include\my_alloc.h
+
+1456316545 c:\prog\test\cosas.h
+	<iostream>
+	<cstring>
+	<string>
+	<stdexcept>
+	<mysql.h>
+	"utiles.h"
+	"cliente.h"
+
+1456310830 c:\prog\test\cliente.h
+	<iostream>
+	<cstring>
+	<string>
+	<stdexcept>
+	<mysql.h>
+	"utiles.h"
+
+1456311129 source:c:\prog\test\cliente.cpp
+	<iostream>
+	<cstring>
+	<string>
+	<stdexcept>
+	<mysql.h>
+	"cliente.h"
+	"utiles.h"
+
+1456140201 c:\libs\mysql\include\my_global.h
+	<my_config.h>
+	<winsock2.h>
+	<ws2tcpip.h>
+	<io.h>
+	<process.h>
+	<sys/types.h>
+	<pthread.h>
+	<pthread.h>
+	<stdio.h>
+	<stdarg.h>
+	<stdlib.h>
+	<stddef.h>
+	<math.h>
+	<limits.h>
+	<float.h>
+	<fenv.h>
+	<sys/types.h>
+	<fcntl.h>
+	<sys/stat.h>
+	<sys/time.h>
+	<time.h>
+	<sys/time.h>
+	<time.h>
+	<unistd.h>
+	<alloca.h>
+	<errno.h>
+	<crypt.h>
+	<assert.h>
+	<sys/stream.h>
+	<my_compiler.h>
+	<sys/socket.h>
+	<plugin.h>
+	<my_dbug.h>
+	<my_byteorder.h>
+	<dlfcn.h>
+	<new>
+	<limits>
+
+1453952526 c:\libs\mysql\include\my_config.h
+
+1453950762 c:\libs\mysql\include\my_compiler.h
+	<my_global.h>
+	<my_attribute.h>
+
+1453950762 c:\libs\mysql\include\my_attribute.h
+
+1453950762 c:\libs\mysql\include\my_dbug.h
+	<signal.h>
+	<crtdbg.h>
+
+1453950762 c:\libs\mysql\include\my_byteorder.h
+	"byte_order_generic_x86.h"
+	"byte_order_generic_x86_64.h"
+	"byte_order_generic.h"
+	"big_endian.h"
+	"little_endian.h"
+
+1453950762 c:\libs\mysql\include\byte_order_generic_x86.h
+
+1453950762 c:\libs\mysql\include\byte_order_generic_x86_64.h
+
+1453950762 c:\libs\mysql\include\byte_order_generic.h
+
+1453950762 c:\libs\mysql\include\big_endian.h
+
+1453950762 c:\libs\mysql\include\little_endian.h
+
+1453950762 c:\libs\mysql\include\my_sys.h
+	"my_global.h"
+	<m_string.h>
+	<sys/asynch.h>
+	<my_valgrind.h>
+	<my_pthread.h>
+	<m_ctype.h>
+	<stdarg.h>
+	<typelib.h>
+	<malloc.h>
+	<mysql/plugin.h>
+	<errno.h>
+	<my_alloc.h>
+	<sys/mman.h>
+	<mysql/psi/psi.h>
+
+1453950762 c:\libs\mysql\include\m_string.h
+	"my_global.h"
+	<strings.h>
+	<string.h>
+	<memory.h>
+	<mysql/plugin.h>
+
+1453950762 c:\libs\mysql\include\my_valgrind.h
+	<valgrind/memcheck.h>
+
+1453950762 c:\libs\mysql\include\my_pthread.h
+	"my_global.h"
+	<signal.h>
+	<pthread.h>
+	<thread.h>
+	<sched.h>
+	<synch.h>
+	<mysql/psi/mysql_thread.h>
+
+1453950762 c:\libs\mysql\include\m_ctype.h
+	<my_attribute.h>
+	"my_global.h"
+	"t_ctype.h"
+
+1456140215 c:\libs\mysql\include\plugin.h
+	<services.h>
+	"plugin_ftparser.h"
+
+1453950762 c:\libs\mysql\include\plugin_ftparser.h
+	"plugin.h"
+
+1453950762 c:\libs\mysql\include\services.h
+	<mysql/service_my_snprintf.h>
+	<mysql/service_thd_alloc.h>
+	<mysql/service_thd_wait.h>
+	<mysql/service_progress_report.h>
+	<mysql/service_debug_sync.h>
+	<mysql/service_kill_statement.h>
+	<mysql/service_thd_timezone.h>
+	<mysql/service_sha1.h>
+	<mysql/service_md5.h>
+	<mysql/service_logger.h>
+	<mysql/service_thd_autoinc.h>
+	<mysql/service_thd_error_context.h>
+	<mysql/service_thd_specifics.h>
+	<mysql/service_encryption.h>
+	<mysql/service_encryption_scheme.h>
+
+1453950762 c:\libs\mysql\include\mysql\mysql.h
+	<standards.h>
+	<sys/types.h>
+	"mysql_version.h"
+	"mysql_com.h"
+	"mysql_time.h"
+	"my_list.h"
+	"typelib.h"
+	"my_alloc.h"
+
+1453952526 c:\libs\mysql\include\mysql\mysql_version.h
+	<custom_conf.h>
+
+1453950762 c:\libs\mysql\include\mysql\mysql_com.h
+
+1453950762 c:\libs\mysql\include\mysql\mysql_time.h
+
+1453950762 c:\libs\mysql\include\mysql\my_list.h
+
+1453950762 c:\libs\mysql\include\mysql\typelib.h
+	"my_alloc.h"
+
+1453950762 c:\libs\mysql\include\mysql\my_alloc.h
+
+1453950762 c:\libs\mysql\include\mysql\my_global.h
+	<my_config.h>
+	<winsock2.h>
+	<ws2tcpip.h>
+	<io.h>
+	<process.h>
+	<sys/types.h>
+	<pthread.h>
+	<pthread.h>
+	<stdio.h>
+	<stdarg.h>
+	<stdlib.h>
+	<stddef.h>
+	<math.h>
+	<limits.h>
+	<float.h>
+	<fenv.h>
+	<sys/types.h>
+	<fcntl.h>
+	<sys/stat.h>
+	<sys/time.h>
+	<time.h>
+	<sys/time.h>
+	<time.h>
+	<unistd.h>
+	<alloca.h>
+	<errno.h>
+	<crypt.h>
+	<assert.h>
+	<sys/stream.h>
+	<my_compiler.h>
+	<sys/socket.h>
+	<mysql/plugin.h>
+	<my_dbug.h>
+	<my_byteorder.h>
+	<dlfcn.h>
+	<new>
+	<limits>
+
+1453952526 c:\libs\mysql\include\mysql\my_config.h
+
+1453950762 c:\libs\mysql\include\mysql\my_compiler.h
+	<my_global.h>
+	<my_attribute.h>
+
+1453950762 c:\libs\mysql\include\mysql\my_attribute.h
+
+1453950762 c:\libs\mysql\include\mysql\plugin.h
+	<mysql/services.h>
+	"plugin_ftparser.h"
+
+1453950762 c:\libs\mysql\include\mysql\services.h
+	<mysql/service_my_snprintf.h>
+	<mysql/service_thd_alloc.h>
+	<mysql/service_thd_wait.h>
+	<mysql/service_progress_report.h>
+	<mysql/service_debug_sync.h>
+	<mysql/service_kill_statement.h>
+	<mysql/service_thd_timezone.h>
+	<mysql/service_sha1.h>
+	<mysql/service_md5.h>
+	<mysql/service_logger.h>
+	<mysql/service_thd_autoinc.h>
+	<mysql/service_thd_error_context.h>
+	<mysql/service_thd_specifics.h>
+	<mysql/service_encryption.h>
+	<mysql/service_encryption_scheme.h>
+
+1453950762 c:\libs\mysql\include\mysql\service_my_snprintf.h
+	<stdarg.h>
+	<stdlib.h>
+
+1453950762 c:\libs\mysql\include\mysql\service_thd_alloc.h
+	<stdlib.h>
+
+1453950762 c:\libs\mysql\include\mysql\service_thd_wait.h
+
+1453950762 c:\libs\mysql\include\mysql\service_progress_report.h
+
+1453950762 c:\libs\mysql\include\mysql\service_debug_sync.h
+	<stdlib.h>
+
+1453950762 c:\libs\mysql\include\mysql\service_kill_statement.h
+
+1453950762 c:\libs\mysql\include\mysql\service_thd_timezone.h
+	"mysql_time.h"
+
+1453950762 c:\libs\mysql\include\mysql\service_sha1.h
+	<stdlib.h>
+
+1453950762 c:\libs\mysql\include\mysql\service_md5.h
+	<stdlib.h>
+
+1453950762 c:\libs\mysql\include\mysql\service_logger.h
+	<stdarg.h>
+
+1453950762 c:\libs\mysql\include\mysql\service_thd_autoinc.h
+
+1453950762 c:\libs\mysql\include\mysql\service_thd_error_context.h
+
+1453950762 c:\libs\mysql\include\mysql\service_thd_specifics.h
+
+1453950762 c:\libs\mysql\include\mysql\service_encryption.h
+	<malloc.h>
+	<stdlib.h>
+	<alloca.h>
+
+1453950762 c:\libs\mysql\include\mysql\service_encryption_scheme.h
+
+1453950762 c:\libs\mysql\include\mysql\plugin_ftparser.h
+	"plugin.h"
+
+1453950762 c:\libs\mysql\include\mysql\my_dbug.h
+	<signal.h>
+	<crtdbg.h>
+
+1453950762 c:\libs\mysql\include\mysql\my_byteorder.h
+	"byte_order_generic_x86.h"
+	"byte_order_generic_x86_64.h"
+	"byte_order_generic.h"
+	"big_endian.h"
+	"little_endian.h"
+
+1453950762 c:\libs\mysql\include\mysql\byte_order_generic_x86.h
+
+1453950762 c:\libs\mysql\include\mysql\byte_order_generic_x86_64.h
+
+1453950762 c:\libs\mysql\include\mysql\byte_order_generic.h
+
+1453950762 c:\libs\mysql\include\mysql\big_endian.h
+
+1453950762 c:\libs\mysql\include\mysql\little_endian.h
+
+1453950762 c:\libs\mysql\include\mysql\my_sys.h
+	"my_global.h"
+	<m_string.h>
+	<sys/asynch.h>
+	<my_valgrind.h>
+	<my_pthread.h>
+	<m_ctype.h>
+	<stdarg.h>
+	<typelib.h>
+	<malloc.h>
+	<mysql/plugin.h>
+	<errno.h>
+	<my_alloc.h>
+	<sys/mman.h>
+	<mysql/psi/psi.h>
+
+1453950762 c:\libs\mysql\include\mysql\m_string.h
+	"my_global.h"
+	<strings.h>
+	<string.h>
+	<memory.h>
+	<mysql/plugin.h>
+
+1453950762 c:\libs\mysql\include\mysql\my_valgrind.h
+	<valgrind/memcheck.h>
+
+1453950762 c:\libs\mysql\include\mysql\my_pthread.h
+	"my_global.h"
+	<signal.h>
+	<pthread.h>
+	<thread.h>
+	<sched.h>
+	<synch.h>
+	<mysql/psi/mysql_thread.h>
+
+1453950762 c:\libs\mysql\include\mysql\psi\mysql_thread.h
+	"mysql/psi/psi.h"
+
+1453950762 c:\libs\mysql\include\mysql\psi\psi.h
+
+1453950762 c:\libs\mysql\include\mysql\m_ctype.h
+	<my_attribute.h>
+	"my_global.h"
+	"t_ctype.h"
+
+1456419178 source:c:\prog\test\decimal.cpp
+	"decimal.h"
+
+1456419220 c:\prog\test\decimal.h
+	<cstdint>
+

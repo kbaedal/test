@@ -1,0 +1,223 @@
+<table>
+presentador
+id_presentador	int auto_increment primary key
+id_sepa 		varchar(35)
+nombre 			varchar(70)
+nif 			varchar(16)
+unique (id_sepa)
+</table>
+
+<table>
+acreedor
+id_acreedor 	int auto_increment primary key
+id_sepa 		varchar(35)
+nombre 			varchar(70)
+nif 			varchar(16)
+direccion 		varchar(50)
+poblacion 		varchar(45)
+cod_postal 		char(5)
+provincia 		varchar(40)
+pais 			varchar(2)
+iban 			varchar(24)
+unique (id_sepa)
+</table>
+
+<table>
+cliente
+id_cliente 		int auto_increment primary key
+cod_cliente 	int
+razon_social 	varchar(40)
+domicilio 		varchar(40)
+cod_postal 		varchar(5)
+poblacion 		varchar(40)
+provincia 		varchar(40)
+nif 			varchar(16)
+tel1 			varchar(12)
+tel2 			varchar(12)
+fax 			varchar(12)
+forma_pago 		int
+categoria 		int
+swift_bic 		varchar(11)
+iban 			varchar(24)
+unique (cod_cliente)
+</table>
+
+<table>
+remesa
+id_remesa 		int auto_increment primary key
+ref_acreedor 	varchar(35)
+ref_presentador varchar(35) 
+referencia 		varchar(35)
+fecha 			varchar(8)
+entidad 		varchar(4)
+oficina 		varchar(4)
+iban 			varchar(24)
+importe_total 	int
+num_adeudos 	int
+unique (referencia)
+foreign key (ref_acreedor) references acreedor (id_sepa) on delete set null on update cascade
+foreign key (ref_presentador) references presentador (id_sepa) on delete set null on update cascade
+</table>
+
+<table>
+adeudo
+id_adeudo 		int auto_increment primary key
+ref_remesa 		varchar(35)
+cod_cliente 	varchar(6)
+referencia 		varchar(35)
+mandato 		varchar(35)
+factura 		varchar(6)
+vencimiento 	varchar(3)
+fecha_venc 		varchar(8)
+tipo 			varchar(4)
+importe 		decimal(8, 2)
+swift_bic 		varchar(11)
+nombre 			varchar(70)
+direccion 		varchar(50)
+poblacion 		varchar(45)
+cod_postal 		varchar(5)
+provincia 		varchar(40)
+pais 			varchar(2)
+tipo_id 		varchar(1)
+identificacion 	varchar(35)
+iban 			varchar(34)
+proposito 		varchar(4)
+categoria 		varchar(4)
+concepto 		varchar(140)
+foreign key (ref_remesa) references remesa(referencia) on delete set null on update cascade
+</table>
+
+<table>
+banco
+id_banco 		int auto_increment primary key
+nrbe 			varchar(4)
+entidad 		varchar(256)
+swift_bic 		varchar(11)
+unique (nrbe)
+</table>
+
+<table>
+iban_excluidos
+id_ibanexc 		int auto_increment primary key
+iban 			varchar(24)
+observaciones 	varchar(500)
+unique (iban)
+</table>
+
+<table>
+cod_postales
+id_codpostal 	int auto_increment primary key
+codigo 			varchar(5)
+localidad 		varchar(70)
+provincia 		varchar(20)
+</table>
+
+<table>
+proveedor
+id_prov 		int auto_increment primary key
+cod_prov		int not null default 0
+razon_social 	varchar(40)
+domicilio 		varchar(40)
+cod_postal 		varchar(5)
+poblacion 		varchar (40)
+cif 			varchar(16)
+tel1 			varchar(12)
+tel2 			varchar(12)
+fax 			varchar(12)
+forma_pago 		int not null default 0
+banco 			int not null default 0
+unique (cod_prov)
+</table>
+
+<table>
+articulo
+id_art 			int auto_increment primary key
+cod_prov 		int 
+cod_art 		int not null default 0
+descripcion 	varchar(64)
+coste 			decimal(13, 5)
+dto1 			decimal(4, 2)
+dto2 			decimal(4, 2)
+dto3			decimal(4, 2)
+coste_neto		decimal(13, 5)
+portes 			decimal(13, 5)
+gastos_ad 		decimal(13, 5)
+coste_real 		decimal(13, 5)
+venta			decimal(13, 5)
+unique (cod_prov, cod_art)
+foreign key (cod_prov) references proveedor(cod_prov) on delete set null on update cascade
+</table>
+
+<table>
+movalm
+id_movalm 		int auto_increment primary key
+tipo			int not null default 0
+tipo_doc 		int not null default 0
+num_doc 		int not null default 0
+cantidad 		decimal(8, 2)
+precio_ud 		decimal(13, 5)
+cod_prov 		int
+cod_art 		int
+total_mov 		decimal(13, 5)
+fecha 			date
+foreign key (cod_prov, cod_art) references articulo (cod_prov, cod_art)
+</table>
+
+<table>
+docventa
+id_docventa 	int auto_increment primary key
+tipo 			int not null default 0
+numero 			int not null default 0
+fecha 			date
+cliente 		int
+base 			decimal(6, 2)
+iva1 			decimal(6, 2)
+iva2 			decimal(6, 2)
+iva3 			decimal(6, 2)
+total 			decimal(8, 2)
+unique (tipo, numero)
+foreign key (cliente) references cliente(cod_cliente) on delete set null on update cascade
+</table>
+
+<table>
+doccompra
+id_doccompra 	int auto_increment primary key
+tipo 			int not null default 0
+numero 			int not null default 0
+fecha 			date
+prov 			int references proveedor(cod_prov)
+iva1 			decimal(6, 2)
+iva2 			decimal(6, 2)
+iva3 			decimal(6, 2)
+total 			decimal(8, 2)
+unique (tipo, numero)
+foreign key (prov) references proveedor(cod_prov) on delete set null on update cascade
+</table>
+
+<table>
+almart
+id_almart 		int auto_increment primary key
+cod_prov 		int
+cod_art 		int
+stock_act 		decimal(8, 2)
+stock_ant 		decimal(8, 2)
+ult_ent_tipo 	int
+ult_ent_doc 	int
+ult_sal_tipo 	int
+ult_sal_doc 	int
+foreign key (cod_prov, cod_art) references articulo (cod_prov, cod_art)
+foreign key (ult_ent_tipo, ult_ent_doc) references doccompra (tipo, numero)
+foreign key (ult_sal_tipo, ult_sal_doc) references docventa (tipo, numero)
+</table>
+
+<table>
+ent_bancaria
+id_entidad 		int auto_increment primary key
+banco 			varchar(40)
+sucursal 		varchar(40)
+domicilio 		varchar(40)
+pobalcion 		varchar(40)
+cod_postal 		varchar(5)
+iban 			varchar(24)
+unique (iban)
+</table>
