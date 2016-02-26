@@ -5,8 +5,11 @@
 
 #include "cosas.h"
 
+
+
 int main()
 {
+    /*
     MYSQL *my_con = mysql_init(NULL);
 
     // Incializamos la estructura de la conexion.
@@ -37,7 +40,7 @@ int main()
     get_datos_cliente(my_con, 100, c);
 
     mysql_close(my_con);
+    */
 
     return 0;
-
 }

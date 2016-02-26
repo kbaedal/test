@@ -1,4 +1,5 @@
 #include "decimal.h"
+#include "cosas.h"
 
 decimal::decimal(unsigned int _c, unsigned int _d) : c(_c), d(_d), e(_c - _d)
 {
@@ -44,6 +45,29 @@ decimal::~decimal()
     if(d == 1)
         delete parte_decimal;
     else if(d > 1)
-        delete [] parte_decimal
+        delete [] parte_decimal;
 }
+
+void decimal::assign(const std::string &num)
+{
+    /*
+    bool        entero_par, decimal_par;
+
+
+    if(!es_numero(num)) {
+        // TODO: exception
+    }
+
+    */
+    // Calculamos la posicion del punto, y desde ahí vemos la parte
+    // que corresponde a la entera y a la decimal.
+    // Así ya podemos calcular si el número pasado "cabe" en la
+    // definicion de este decimal. Si cabe
+
+
+}
+
+
+
+
 

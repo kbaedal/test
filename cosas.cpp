@@ -7,12 +7,15 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #include <mysql.h>
 
 #include "utiles.h"
 #include "cosas.h"
 #include "cliente.h"
+
+
 
 void print_mysql_error (MYSQL *my_con, const std::string &mensaje)
 {
@@ -516,46 +519,18 @@ int get_datos_cliente(MYSQL *my_con, int codigo, Cliente &c)
     return 0;
 }
 
-/*
-bool BaseDatos::datosCliente(int id, Cliente &c)
+// Esto probablemente podemos meterlo en últiles.
+// Comprueba que la string pasada está compuesta
+// solamente de números y puntos, y que solamente
+// hay un punto.
+bool es_numero(const std::string &str)
 {
-    const int       kcampos_tabla = 15;
-    char            consulta[1024];
-    sqlite3_stmt    *ppStmt;
+    // Comprobamos que solo contenga números y puntos.
+    std::string::size_type son_digitos = str.find_first_not_of("0123456789.");
+    // Y contamos el número de puntos.
+    size_t num_points  = std::count(str.begin(), str.end(), '.');
 
-    sprintf(consulta, "SELECT * FROM cliente WHERE ID_CLIENTE=%d;", id);
-    if(SQLITE_OK != sqlite3_prepare_v2(m_sqltBD, consulta, -1, &ppStmt, NULL)) {
-        // Error al preparar la consulta.
-        //std::cout << "Error: " << sqlite3_errmsg(db) << std::endl;
-        return false;
-    } else {
-       if(SQLITE_ROW == sqlite3_step(ppStmt)) {
-            // Rellenamos los datos.
-            c.limpiar();
-
-            for(int i = 0, j = 0; j < kcampos_tabla; j++) {
-                switch(j) {
-                    case 0:
-                        c.id = sqlite3_column_int(ppStmt, j);
-                        break;
-                    default:
-                        utiles::UTF8ToISO20022(std::string((char *)sqlite3_column_text(ppStmt, j)), c[i]);
-                        i++;
-                        break;
-                }
-            }
-        } else {
-            // El cliente no existe.
-            return false;
-        }
-
-        sqlite3_finalize(ppStmt);
-    }
-
-    return true;
+    // Si todos son digitos y puntos, y hay como máximo un punto,
+    // entonces tenemos un número válido.
+    return (son_digitos == std::string::npos) && (num_points < 2);
 }
-*/
-
-
-
-

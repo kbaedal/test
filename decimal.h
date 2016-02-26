@@ -2,6 +2,9 @@
 #define DECIMAL_H_INCLUDED
 
 #include <cstdint>
+#include <string>
+
+
 // El plan es tener un tipo de dato decimal, similar al que se
 // utiliza en algunas bases de datos para almacenar numeros
 // con decimales de forma precisa, sin los problemas de
@@ -27,6 +30,8 @@ class decimal {
         // Operadores
         //decimal &operator=(const decimal &n);
 
+        void assign(const std::string &num);
+
     private:
         uint8_t *parte_entera;
         uint8_t *parte_decimal;
@@ -34,6 +39,8 @@ class decimal {
         unsigned int c; // Total de cifras del número.
         unsigned int d; // Total decimales del número, donde (d <= c).
         unsigned int e; // Total enteros del número: (e = c - d).
+
+
 };
 
 #endif // DECIMAL_H_INCLUDED

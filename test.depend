@@ -438,3 +438,99 @@
 1456419220 c:\prog\test\decimal.h
 	<cstdint>
 
+1456474610 source:c:\develop\projects\test\cliente.cpp
+	<iostream>
+	<cstring>
+	<string>
+	<stdexcept>
+	<mysql.h>
+	"cliente.h"
+	"utiles.h"
+
+1456427664 c:\develop\libs\mysql\include\mysql.h
+	<standards.h>
+	<sys/types.h>
+	"mysql_version.h"
+	"mysql_com.h"
+	"mysql_time.h"
+	"my_list.h"
+	"typelib.h"
+	"my_alloc.h"
+
+1456427664 c:\develop\libs\mysql\include\mysql_version.h
+	<custom_conf.h>
+
+1456427664 c:\develop\libs\mysql\include\mysql_com.h
+
+1456427664 c:\develop\libs\mysql\include\mysql_time.h
+
+1456427665 c:\develop\libs\mysql\include\my_list.h
+
+1456427665 c:\develop\libs\mysql\include\typelib.h
+	"my_alloc.h"
+
+1456427664 c:\develop\libs\mysql\include\my_alloc.h
+
+1456426754 c:\develop\projects\test\cliente.h
+	<iostream>
+	<cstring>
+	<string>
+	<stdexcept>
+	<mysql.h>
+	"utiles.h"
+
+1456426754 c:\develop\projects\test\utiles.h
+	<string>
+	<vector>
+
+1456474526 source:c:\develop\projects\test\cosas.cpp
+	<cstdio>
+	<cstdlib>
+	<cstring>
+	<cmath>
+	<iostream>
+	<fstream>
+	<sstream>
+	<string>
+	<vector>
+	<algorithm>
+	<mysql.h>
+	"utiles.h"
+	"cosas.h"
+	"cliente.h"
+
+1456474517 c:\develop\projects\test\cosas.h
+	<iostream>
+	<cstring>
+	<string>
+	<stdexcept>
+	<mysql.h>
+	"utiles.h"
+	"cliente.h"
+
+1456474226 source:c:\develop\projects\test\decimal.cpp
+	"decimal.h"
+	"cosas.h"
+
+1456474192 c:\develop\projects\test\decimal.h
+	<cstdint>
+	<string>
+
+1456474452 source:c:\develop\projects\test\main.cpp
+	<iostream>
+	<string>
+	<mysql.h>
+	"cosas.h"
+
+1456426754 source:c:\develop\projects\test\utiles.cpp
+	<cstdio>
+	<cstdlib>
+	<cstring>
+	<cmath>
+	<iostream>
+	<iomanip>
+	<fstream>
+	<sstream>
+	<string>
+	"utiles.h"
+

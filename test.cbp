@@ -12,15 +12,9 @@
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
-					<Add option="-std=gnu++11" />
 					<Add option="-g" />
-					<Add directory="c:/libs/mysql/include" />
-					<Add directory="c:/libs/mysql/include/mysql" />
+					<Add option="-std=gnu++11" />
 				</Compiler>
-				<Linker>
-					<Add library="C:/libs/mysql/lib/libmysql.a" />
-					<Add directory="C:/libs/mysql/lib" />
-				</Linker>
 			</Target>
 			<Target title="Release">
 				<Option output="bin/Release/test" prefix_auto="1" extension_auto="1" />
@@ -37,10 +31,15 @@
 			</Target>
 		</Build>
 		<Compiler>
-			<Add option="-std=gnu++11" />
 			<Add option="-Wall" />
+			<Add option="-std=gnu++11" />
 			<Add option="-fexceptions" />
+			<Add directory="C:/Develop/Libs/mysql/include" />
 		</Compiler>
+		<Linker>
+			<Add library="C:/Develop/Libs/mysql/lib/libmysql.a" />
+			<Add directory="C:/Develop/Libs/mysql/lib" />
+		</Linker>
 		<Unit filename="cliente.cpp" />
 		<Unit filename="cliente.h" />
 		<Unit filename="cosas.cpp" />

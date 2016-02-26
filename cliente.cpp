@@ -8,6 +8,8 @@
 #include "cliente.h"
 #include "utiles.h"
 
+
+
 Cliente::Cliente()
 {
     this->limpiar();
@@ -281,6 +283,7 @@ MYSQL_BIND *Cliente::get_mysql_bind(void)
     for(size_t i = 0; i < num_campos; ++i) {
         if((i == 0) || (i ==  10) || (i == 11))  {
             // Enteros. Asignamos y seguimos.
+
             int *ptrdato = new int;
             *ptrdato = *static_cast<int *>(this->operator[](i));
 
@@ -291,12 +294,6 @@ MYSQL_BIND *Cliente::get_mysql_bind(void)
             // Cadenas de caracteres.
             // Reservamos memoria para copiar las cadenas desde
             // las std::strings que tenemos a cadenas c-style.
-            // Como hemos reservado memoria para incluir hasta
-            // num_campos cadenas en la variable **datos, utilizamos
-            // el mismo contador del bucle para no tener que
-            // preocuparnos de controlar otra variable más.
-            // El consumo de memoria es mínimo (dejamos unos pocos
-            // punteros a nullptr) y la legibilidad del código es mayor.
 
             std::string *cadena = static_cast<std::string *>(this->operator[](i));
             char        *ptrdato = new char[cadena->size() + 1];
