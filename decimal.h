@@ -36,9 +36,9 @@ class decimal {
         uint8_t *parte_entera;
         uint8_t *parte_decimal;
 
-        unsigned int c; // Total de cifras del número.
-        unsigned int d; // Total decimales del número, donde (d <= c).
-        unsigned int e; // Total enteros del número: (e = c - d).
+        unsigned int cifs; // Total de cifras del número.
+        unsigned int decs; // Total decimales del número, donde (d <= c).
+        unsigned int ents; // Total enteros del número: (e = c - d).
 
 
 };
