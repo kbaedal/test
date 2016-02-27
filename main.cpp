@@ -4,6 +4,7 @@
 #include <mysql.h>
 
 #include "cosas.h"
+#include "decimal.h"
 
 
 
@@ -41,6 +42,17 @@ int main()
 
     mysql_close(my_con);
     */
+    decimal a(13, 5);
+
+    std::cout << a << std::endl;
+
+    a.assign(std::string("5.555"));
+
+    std::cout << a << std::endl;
+
+    a.assign(std::string("5.55566666"));
+
+    std::cout << a << std::endl;
 
     return 0;
 }

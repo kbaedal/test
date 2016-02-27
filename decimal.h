@@ -32,6 +32,11 @@ class decimal {
 
         void assign(const std::string &num);
 
+        friend std::ostream &operator << (std::ostream &os, const decimal &d)
+        {
+            os << d.representacion; return os;
+        }
+
     private:
         uint8_t *parte_entera;
         uint8_t *parte_decimal;
@@ -39,6 +44,10 @@ class decimal {
         unsigned int cifs; // Total de cifras del número.
         unsigned int decs; // Total decimales del número, donde (d <= c).
         unsigned int ents; // Total enteros del número: (e = c - d).
+
+        std::string representacion; // Contiene la representacion del numero.
+
+        void convertir(const std::string &str);
 
 
 };
