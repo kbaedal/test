@@ -42,15 +42,9 @@ int main()
 
     mysql_close(my_con);
     */
-    decimal a(13, 5);
+    decimal a(11, 7);
 
-    std::cout << a << std::endl;
-
-    a.assign(std::string("5.555"));
-
-    std::cout << a << std::endl;
-
-    a.assign(std::string("5.55566666"));
+    a.assign("123123.123123");
 
     std::cout << a << std::endl;
 

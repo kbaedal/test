@@ -20,8 +20,8 @@ class decimal {
     public:
         // Constructores
         //decimal(unsigned int total_cifras, unsigned int decimales = 0);
-        decimal(unsigned int _c, unsigned int _d);
-        decimal(unsigned int _c, unsigned int _d, const int &num);
+        decimal(unsigned int _e, unsigned int _d);
+        decimal(unsigned int _e, unsigned int _d, const int &num);
         //decimal(unsigned int _c, unsigned int _d, const float &num);
         //decimal(unsigned int _c, unsigned int _d, const std::string &num);
 
@@ -41,9 +41,10 @@ class decimal {
         uint8_t *parte_entera;
         uint8_t *parte_decimal;
 
-        unsigned int cifs; // Total de cifras del número.
-        unsigned int decs; // Total decimales del número, donde (d <= c).
-        unsigned int ents; // Total enteros del número: (e = c - d).
+        bool    positivo;
+
+        unsigned int ents; // Total enteros del número.
+        unsigned int decs; // Total decimales del númer
 
         std::string representacion; // Contiene la representacion del numero.
 

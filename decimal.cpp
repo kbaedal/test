@@ -1,52 +1,43 @@
 #include <exception>
+#include <cstring>
 
 #include "decimal.h"
 #include "cosas.h"
 #include "utiles.h"
 
-decimal::decimal(unsigned int _c, unsigned int _d) : cifs(_c), decs(_d), ents(_c - _d)
+decimal::decimal(unsigned int _e, unsigned int _d) : ents(_e), decs(_d)
 {
     representacion.clear();
 
-    if(decs > cifs) {
-        decs = cifs;
-        ents = 0;
-    }
-    else if(ents == 1) {
-        parte_entera = new uint8_t;
-        *parte_entera = 0x00;
-
-        representacion = "0";
+    // Reservamos 8 bits por cada dos cifras de la parte entera.
+    if(ents > 0) {
+        parte_entera = new uint8_t[static_cast<int>((ents - 1)/2) + 1];
+        std::memset(parte_entera, 0x00, sizeof parte_entera);
     }
     else {
-        parte_entera = new uint8_t[ents];
-
-        for(std::size_t i = 0; i < ents; ++i) {
-            parte_entera[i] = 0x00;
-            representacion += "0";
-        }
+        parte_entera = nullptr;
     }
 
-    if(decs == 1) {
-        parte_decimal = new uint8_t;
-        *parte_decimal = 0x00;
-
-        representacion += ".0";
+    // Lo mismo para la parte decimal.
+    if(decs > 0) {
+        parte_decimal = new uint8_t[static_cast<int>((decs - 1)/2) + 1];
+        std::memset(parte_decimal, 0x00, sizeof parte_decimal);
     }
-    else if (decs != 0) {
-        parte_decimal = new uint8_t[decs];
-
-        representacion += ".";
-
-        for(std::size_t i = 0; i < decs; ++i) {
-            parte_decimal[i] = 0x00;
-
-            representacion += "0";
-        }
+    else {
+        parte_decimal = nullptr;
     }
+
+    // Rellenamos la representacion del numero.
+    for(size_t i = 0; i < ents; ++i)
+        representacion += "0";
+
+    representacion += ".";
+
+    for(size_t i = 0; i < decs; ++i)
+        representacion += "0";
 }
 
-decimal::decimal(unsigned int _c, unsigned int _d, const int &num) : decimal(_c, _d)
+decimal::decimal(unsigned int _e, unsigned int _d, const int &num) : decimal(_e, _d)
 {
     // Asignamos el entero tras convertirlo a string
     this->assign(utiles::IntToStr(num));
@@ -54,14 +45,10 @@ decimal::decimal(unsigned int _c, unsigned int _d, const int &num) : decimal(_c,
 
 decimal::~decimal()
 {
-    if(ents == 1)
-        delete parte_entera;
-    else if(ents > 1)
+    if(parte_entera != nullptr)
         delete [] parte_entera;
 
-    if(decs == 1)
-        delete parte_decimal;
-    else if(decs > 1)
+    if(parte_decimal != nullptr)
         delete [] parte_decimal;
 }
 
@@ -135,7 +122,27 @@ void decimal::convertir(const std::string &str)
         representacion[i] = temp[i];
 
     // Actualizamos las estructuras.
+    for(int i = representacion.find_first_of('.') - 1, j = 0; i >= 0; i -= 2, ++j) {
+        std::cout << "Convertimos representacion.substr(" << i-1 << ", 2) para parte_entera[" << j << "]" << std::endl;
+        parte_entera[j] = utiles::StrToInt(representacion.substr(i-1, 2));
+    }
+
+    for(int i = representacion.find_first_of('.') + 1, j = 0; i <= representacion.length(); i += 2, ++j) {
+        std::cout << "Convertimos representacion.substr(" << i << ", 2) para parte_decimal[" << j << "]" << std::endl;
+        parte_decimal[j] = utiles::StrToInt(representacion.substr(i, 2));
+    }
+
+    std::cout << "Ents: ";
+    for(int i = 0; i < ents/2; ++i)
+        std::cout << utiles::IntToStr(static_cast<int>(parte_entera[i])) << " ";
+    std::cout << std::endl;
+
+    std::cout << "Decs: ";
+    for(int i = 0; i < decs/2; ++i)
+        std::cout << utiles::IntToStr(static_cast<int>(parte_decimal[i])) << " ";
+    std::cout << std::endl;
 }
+
 
 
 

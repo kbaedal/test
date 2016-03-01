@@ -438,7 +438,7 @@
 1456419220 c:\prog\test\decimal.h
 	<cstdint>
 
-1456477878 source:c:\develop\projects\test\cliente.cpp
+1456474610 source:c:\develop\projects\test\cliente.cpp
 	<iostream>
 	<cstring>
 	<string>
@@ -447,7 +447,7 @@
 	"cliente.h"
 	"utiles.h"
 
-1453950762 c:\develop\libs\mysql\include\mysql.h
+1456427664 c:\develop\libs\mysql\include\mysql.h
 	<standards.h>
 	<sys/types.h>
 	"mysql_version.h"
@@ -457,21 +457,21 @@
 	"typelib.h"
 	"my_alloc.h"
 
-1453952526 c:\develop\libs\mysql\include\mysql_version.h
+1456427664 c:\develop\libs\mysql\include\mysql_version.h
 	<custom_conf.h>
 
-1453950762 c:\develop\libs\mysql\include\mysql_com.h
+1456427664 c:\develop\libs\mysql\include\mysql_com.h
 
-1453950762 c:\develop\libs\mysql\include\mysql_time.h
+1456427664 c:\develop\libs\mysql\include\mysql_time.h
 
-1453950762 c:\develop\libs\mysql\include\my_list.h
+1456427665 c:\develop\libs\mysql\include\my_list.h
 
-1453950762 c:\develop\libs\mysql\include\typelib.h
+1456427665 c:\develop\libs\mysql\include\typelib.h
 	"my_alloc.h"
 
-1453950762 c:\develop\libs\mysql\include\my_alloc.h
+1456427664 c:\develop\libs\mysql\include\my_alloc.h
 
-1456310830 c:\develop\projects\test\cliente.h
+1456426754 c:\develop\projects\test\cliente.h
 	<iostream>
 	<cstring>
 	<string>
@@ -479,11 +479,11 @@
 	<mysql.h>
 	"utiles.h"
 
-1455279979 c:\develop\projects\test\utiles.h
+1456426754 c:\develop\projects\test\utiles.h
 	<string>
 	<vector>
 
-1456477879 source:c:\develop\projects\test\cosas.cpp
+1456474526 source:c:\develop\projects\test\cosas.cpp
 	<cstdio>
 	<cstdlib>
 	<cstring>
@@ -499,7 +499,7 @@
 	"cosas.h"
 	"cliente.h"
 
-1456477879 c:\develop\projects\test\cosas.h
+1456474517 c:\develop\projects\test\cosas.h
 	<iostream>
 	<cstring>
 	<string>
@@ -508,24 +508,25 @@
 	"utiles.h"
 	"cliente.h"
 
-1456574137 source:c:\develop\projects\test\decimal.cpp
+1456695965 source:c:\develop\projects\test\decimal.cpp
 	<exception>
+	<cstring>
 	"decimal.h"
 	"cosas.h"
 	"utiles.h"
 
-1456563509 c:\develop\projects\test\decimal.h
+1456695892 c:\develop\projects\test\decimal.h
 	<cstdint>
 	<string>
 
-1456574155 source:c:\develop\projects\test\main.cpp
+1456694772 source:c:\develop\projects\test\main.cpp
 	<iostream>
 	<string>
 	<mysql.h>
 	"cosas.h"
 	"decimal.h"
 
-1455884569 source:c:\develop\projects\test\utiles.cpp
+1456426754 source:c:\develop\projects\test\utiles.cpp
 	<cstdio>
 	<cstdlib>
 	<cstring>
