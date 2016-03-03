@@ -19,22 +19,22 @@
 class decimal {
     public:
         // Constructores
-        //decimal(unsigned int total_cifras, unsigned int decimales = 0);
-        decimal(unsigned int _e, unsigned int _d);
-        decimal(unsigned int _e, unsigned int _d, const int &num);
-        //decimal(unsigned int _c, unsigned int _d, const float &num);
-        //decimal(unsigned int _c, unsigned int _d, const std::string &num);
+        decimal(unsigned int _c, unsigned int _d);
 
         // Destructor
         ~decimal();
+
         // Operadores
-        //decimal &operator=(const decimal &n);
+        decimal &operator=(const decimal &dec);
+        decimal &operator=(const std::string &str);
 
         void assign(const std::string &num);
 
         friend std::ostream &operator << (std::ostream &os, const decimal &d)
         {
-            os << d.representacion; return os;
+            os << d.representacion;
+
+            return os;
         }
 
     private:
@@ -43,8 +43,11 @@ class decimal {
 
         bool    positivo;
 
-        unsigned int ents; // Total enteros del número.
-        unsigned int decs; // Total decimales del númer
+        unsigned int ents;      // Total enteros del número.
+        unsigned int long_ents; // Tamaño del array para los enteros: ((ents - 1)/2) + 1
+        unsigned int decs;      // Total decimales del número.
+        unsigned int long_decs; // Tamaño del array para los decimales: ((decs - 1)/2) + 1
+
 
         std::string representacion; // Contiene la representacion del numero.
 
@@ -54,3 +57,4 @@ class decimal {
 };
 
 #endif // DECIMAL_H_INCLUDED
+

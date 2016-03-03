@@ -213,6 +213,15 @@ void utiles::RellenaCadena(char *cadena, char c, int num_chars)
 	cadena[num_chars - 1] = '\0';
 }
 
+std::string utiles::FltToStr(float f)
+{
+    std::stringstream ss;
+
+    ss << f;
+
+    return ss.str();
+}
+
 std::string utiles::IntToStr(int n, int width)
 {
     std::stringstream ss;

@@ -42,11 +42,14 @@ int main()
 
     mysql_close(my_con);
     */
-    decimal a(11, 7);
-
-    a.assign("123123.123123");
+    decimal a(13, 5);
 
     std::cout << a << std::endl;
+
+    a = "123456.65432105656565";
+
+    std::cout << a << std::endl;
+
 
     return 0;
 }

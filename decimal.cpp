@@ -5,14 +5,15 @@
 #include "cosas.h"
 #include "utiles.h"
 
-decimal::decimal(unsigned int _e, unsigned int _d) : ents(_e), decs(_d)
+decimal::decimal(unsigned int _c, unsigned int _d) : ents(_c - _d), decs(_d)
 {
     representacion.clear();
 
     // Reservamos 8 bits por cada dos cifras de la parte entera.
     if(ents > 0) {
-        parte_entera = new uint8_t[static_cast<int>((ents - 1)/2) + 1];
-        std::memset(parte_entera, 0x00, sizeof parte_entera);
+        long_ents = static_cast<int>((ents - 1)/2) + 1;
+        parte_entera = new uint8_t[long_ents];
+        std::memset(parte_entera, 0x00, sizeof(uint8_t[long_ents]));
     }
     else {
         parte_entera = nullptr;
@@ -20,8 +21,9 @@ decimal::decimal(unsigned int _e, unsigned int _d) : ents(_e), decs(_d)
 
     // Lo mismo para la parte decimal.
     if(decs > 0) {
-        parte_decimal = new uint8_t[static_cast<int>((decs - 1)/2) + 1];
-        std::memset(parte_decimal, 0x00, sizeof parte_decimal);
+        long_decs = static_cast<int>((decs - 1)/2) + 1;
+        parte_decimal = new uint8_t[long_decs];
+        std::memset(parte_decimal, 0x00, sizeof(uint8_t[long_decs]));
     }
     else {
         parte_decimal = nullptr;
@@ -37,10 +39,11 @@ decimal::decimal(unsigned int _e, unsigned int _d) : ents(_e), decs(_d)
         representacion += "0";
 }
 
-decimal::decimal(unsigned int _e, unsigned int _d, const int &num) : decimal(_e, _d)
+decimal &decimal::operator=(const std::string &str)
 {
-    // Asignamos el entero tras convertirlo a string
-    this->assign(utiles::IntToStr(num));
+    this->assign(str);
+
+    return *this;
 }
 
 decimal::~decimal()
@@ -86,10 +89,6 @@ void decimal::assign(const std::string &num)
         }
         else {
             // Procesamos la cadena y la convertimos al formato interno.
-
-            /*
-             * ¿Qué pasa con el redondeo de decimales si truncamos?
-             */
             convertir(num);
         }
     }
@@ -102,6 +101,7 @@ void decimal::convertir(const std::string &str)
 {
     // Trabajamos sobre una copia.
     std::string temp = str;
+    size_t      pos_punto;
 
     // Si tenemos parte entera y decimal, o solo decimal,
     // insertamos ceros por delante de str hasta que las
@@ -117,30 +117,76 @@ void decimal::convertir(const std::string &str)
         while(temp.size() < ents)
             temp.insert(0, "0");
 
+    // Igualamos los tamaños, si es necesario, añadiendo ceros al final.
+    if(temp.size() < representacion.size()) {
+        while(temp.size() < representacion.size()) {
+            // Si no existe el punto decimal, lo añadimos.
+            if(temp.find_first_of('.') == std::string::npos)
+                temp += '.';
+
+            temp += '0';
+        }
+    }
+    else if (temp.size() > representacion.size()) {
+        // La parte decimal de temp es mayor de lo que podemos almacenar,
+        // así que debemos truncarla, redondeando los valores correctamente.
+        char    cifra;
+        int     numero;
+        bool    acarreo = false;
+
+        while(temp.size() > representacion.size()) {
+            cifra   = temp[temp.size() - 1];
+            numero  = utiles::StrToInt(cifra);
+
+            if(acarreo) ++numero;
+
+            // Si el numero es 5 o mayor, incrementamos la siguiente cifra leida.
+            if(numero > 4)
+                acarreo = true;
+            else
+                acarreo = false;
+
+            // Eliminamos esta cifra de la cadena.
+            temp.pop_back();
+        }
+
+        // Si hay acarreo, incrementamos el ultimo valor.
+        if(acarreo) {
+            cifra   = temp[temp.size() - 1];
+            numero  = utiles::StrToInt(cifra) + 1;
+
+            temp.pop_back();
+            temp += utiles::IntToStr(numero);
+        }
+    }
+
     // Reemplazamos en nuestra representacion interna.
     for(size_t i = 0; i < temp.size(); ++i)
         representacion[i] = temp[i];
 
     // Actualizamos las estructuras.
-    for(int i = representacion.find_first_of('.') - 1, j = 0; i >= 0; i -= 2, ++j) {
-        std::cout << "Convertimos representacion.substr(" << i-1 << ", 2) para parte_entera[" << j << "]" << std::endl;
-        parte_entera[j] = utiles::StrToInt(representacion.substr(i-1, 2));
-    }
 
-    for(int i = representacion.find_first_of('.') + 1, j = 0; i <= representacion.length(); i += 2, ++j) {
-        std::cout << "Convertimos representacion.substr(" << i << ", 2) para parte_decimal[" << j << "]" << std::endl;
-        parte_decimal[j] = utiles::StrToInt(representacion.substr(i, 2));
-    }
+    // Tomamos la parte entera para procesarla.
+    pos_punto = representacion.find_first_of('.');
+    temp = representacion.substr(0, pos_punto);
 
-    std::cout << "Ents: ";
-    for(int i = 0; i < ents/2; ++i)
-        std::cout << utiles::IntToStr(static_cast<int>(parte_entera[i])) << " ";
-    std::cout << std::endl;
+    // Si el numero de digitos es impar, añadimos un 0 al principio
+    // para hacerlo par y poder almacenar los numeros por parejas
+    // en nuestro array de enteros.
+    if((temp.size() % 2) != 0)
+        temp.insert(0, "0");
 
-    std::cout << "Decs: ";
-    for(int i = 0; i < decs/2; ++i)
-        std::cout << utiles::IntToStr(static_cast<int>(parte_decimal[i])) << " ";
-    std::cout << std::endl;
+    // Los pasamos al array.
+    for(size_t i = 0, j = long_ents - 1; i < temp.size(); i += 2, --j)
+        parte_entera[j] = utiles::StrToInt(temp.substr(i, 2));
+
+    // Y ahora la parte decimal. Con la salvedad de que añadimos al final.
+    temp = representacion.substr(pos_punto + 1, representacion.size() - pos_punto);
+    if((temp.size() % 2) != 0)
+        temp.append("0");
+
+    for(size_t i = 0, j = 0; i < temp.size(); i += 2, ++j)
+        parte_decimal[j] = utiles::StrToInt(temp.substr(i, 2));
 }
 
 

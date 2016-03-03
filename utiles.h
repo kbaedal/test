@@ -132,6 +132,15 @@ void LeerLineaCSV(const std::string origen, std::vector<std::string> &lista_camp
 void RellenaCadena(char *cadena, char c, int num_chars);
 
 /*!
+ * \brief Convierte un float en una cadena.
+ *
+ * \param flt Float a convertir.
+ * \return La cadena con el float.
+ */
+
+std::string FltToStr(float f);
+
+/*!
  * \brief Convierte un entero en una cadena.
  *
  * \param n Entero a convertir.

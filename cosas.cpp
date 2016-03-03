@@ -525,12 +525,20 @@ int get_datos_cliente(MYSQL *my_con, int codigo, Cliente &c)
 // hay un punto.
 bool es_numero(const std::string &str)
 {
-    // Comprobamos que solo contenga números y puntos.
-    std::string::size_type son_digitos = str.find_first_not_of("0123456789.");
-    // Y contamos el número de puntos.
-    size_t num_points  = std::count(str.begin(), str.end(), '.');
+    std::string temp = str;
 
-    // Si todos son digitos y puntos, y hay como máximo un punto,
-    // entonces tenemos un número válido.
-    return (son_digitos == std::string::npos) && (num_points < 2);
+    utiles::trim(temp);
+
+    // Comprobamos que solo contenga números, guiones y puntos.
+    size_t valid_chars = temp.find_first_not_of("-0123456789.");
+
+    // Contamos el número de puntos.
+    size_t num_points = std::count(temp.begin(), temp.end(), '.');
+
+    // Y averiguamos la posición del guión.
+    size_t pos_minus = temp.find_first_of('-');
+
+    // Si todos son caracteres válidos, hay como máximo un punto, y si
+    // hay un guión está al principio, entonces tenemos un número válido.
+    return (valid_chars == std::string::npos) && (num_points <= 1) && (pos_minus == 0 || pos_minus == std::string::npos);
 }
