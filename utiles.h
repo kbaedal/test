@@ -144,10 +144,11 @@ std::string FltToStr(float f);
  * \brief Convierte un entero en una cadena.
  *
  * \param n Entero a convertir.
- * \param width Tamaño de la cadena devuelta, rellenado a 0 por la izquierda.
+ * \param width Tamaño de la cadena devuelta, rellenado a fillchar por la izquierda.
+ * \param fillchar Caracter con el que rellenamos hasta width por la izquierda.
  * \return La cadena con el entero.
  */
-std::string IntToStr(int n, int width = 0);
+std::string IntToStr(int n, int width = 0, char fillchar = '0');
 
 /*!
  * \brief Convierte una cadena a un entero.

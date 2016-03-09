@@ -42,14 +42,21 @@ int main()
 
     mysql_close(my_con);
     */
-    decimal a(13, 5);
+    decimal a(10, 5);
+    decimal b(10, 5);
 
-    std::cout << a << std::endl;
+    a = "15.00000";
+    b = "1.99999";
 
-    a = "123456.65432105656565";
+    std::cout << a << " , " << b << std::endl;
 
-    std::cout << a << std::endl;
+    a = a + b;
 
+    std::cout << a << " , " << b << std::endl;
+
+    a.resize(8, 5);
+
+    std::cout << a << " , " << b << std::endl;
 
     return 0;
 }

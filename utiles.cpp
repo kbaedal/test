@@ -222,12 +222,12 @@ std::string utiles::FltToStr(float f)
     return ss.str();
 }
 
-std::string utiles::IntToStr(int n, int width)
+std::string utiles::IntToStr(int n, int width, char fillchar)
 {
     std::stringstream ss;
 
     if(width > 0)
-        ss << std::setfill('0') << std::setw(width) << n;
+        ss << std::setfill(fillchar) << std::setw(width) << n;
     else
         ss << n;
 
