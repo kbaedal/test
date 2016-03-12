@@ -58,5 +58,9 @@ int main()
 
     std::cout << a << " , " << b << std::endl;
 
+    a.resize(10, 5);
+
+    std::cout << a << " , " << b << std::endl;
+
     return 0;
 }

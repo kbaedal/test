@@ -9,22 +9,27 @@
 decimal::decimal(unsigned int _c, unsigned int _d) : ents(_c - _d), decs(_d)
 {
     // Reservamos 8 bits por cada dos cifras.
-    long_ents = static_cast<int>((ents - 1)/2) + 1;
-    long_decs = static_cast<int>((decs - 1)/2) + 1;
-    buffer = new uint8_t[long_ents + long_decs];
-    std::memset(buffer, 0x00, sizeof(uint8_t[long_ents + long_decs]));
+    long_ents   = static_cast<int>((ents - 1)/2) + 1;
+    long_decs   = static_cast<int>((decs - 1)/2) + 1;
+    long_buffer = long_ents + long_decs;
+
+    buffer      = new uint8_t[long_buffer];
+
+    std::memset(buffer, 0x00, sizeof(uint8_t[long_buffer]));
 }
 
-decimal::decimal(decimal &d)
+decimal::decimal(const decimal &d)
 {
-    ents = d.ents;
-    decs = d.decs;
-    long_ents = d.long_ents;
-    long_decs = d.long_decs;
+    ents        = d.ents;
+    decs        = d.decs;
+    long_ents   = d.long_ents;
+    long_decs   = d.long_decs;
+    long_buffer = d.long_buffer;
 
-    buffer = new uint8_t[long_ents + long_decs];
-    std::memset(buffer, 0x00, sizeof(uint8_t[long_ents + long_decs]));
-    std::memcpy(buffer, d.buffer, sizeof(uint8_t[long_ents + long_decs]));
+    buffer = new uint8_t[long_buffer];
+
+    std::memset(buffer, 0x00, sizeof(uint8_t[long_buffer]));
+    std::memcpy(buffer, d.buffer, sizeof(uint8_t[long_buffer]));
 }
 
 decimal::~decimal()
@@ -182,7 +187,7 @@ void decimal::convertir(const std::string &str)
     temp.erase(temp.find_first_of('.'), 1);
 
     // Convertimos los valores de la cadena a nuestro formato interno.
-    for(size_t i = 0, j = 0; i < long_ents + long_decs; ++i, j += 2)
+    for(size_t i = 0, j = 0; i < long_buffer; ++i, j += 2)
         buffer[i] = utiles::StrToInt(temp.substr(j, 2));
 }
 
@@ -190,7 +195,7 @@ std::string decimal::to_str() const
 {
     std::string temp;
 
-    for(int i = 0; i < static_cast<int>(long_ents + long_decs); ++i) {
+    for(int i = 0; i < static_cast<int>(long_buffer); ++i) {
         if(i == static_cast<int>(long_ents))
             temp += std::string(".");
 
@@ -199,7 +204,7 @@ std::string decimal::to_str() const
         // Lo mismo para los decimales, pero con el ultimo par.
         if((i == 0) && ((ents % 2) != 0))
             temp += utiles::IntToStr(static_cast<int>(buffer[i]), 2).substr(1, 1);
-        else if((i == static_cast<int>(long_ents + long_decs - 1)) && ((decs % 2) != 0))
+        else if((i == static_cast<int>(long_buffer - 1)) && ((decs % 2) != 0))
             temp += utiles::IntToStr(static_cast<int>(buffer[i]), 2).substr(0, 1);
         else
             temp += utiles::IntToStr(static_cast<int>(buffer[i]), 2);
@@ -213,19 +218,19 @@ decimal &decimal::operator+=(const decimal &d)
     if(d.ents > this->ents)
         throw std::out_of_range("El numero a sumar no encaja en este decimal.");
 
-    // Creamos un decimal del mismo tamaño que nuestro decimal, y le asignamos
-    // el dato del decimal a sumar. Nos aseguramos así de hacer el redondeo
-    // de los decimales si es necesario.
-    decimal temp(ents + decs, ents);
-    temp = d.to_str();
+    // Cambiamos el tamaño del decimal a sumar. Con esto garantizamos dos cosas:
+    //  1. Que la suma se pueda realizar (mismo numero de enteros y decimales).
+    //  2. Que se haya redondeado el decimal correctamente.
+    decimal temp(d);
+    temp.resize(ents + decs, decs);
 
     // Por cada pareja de numeros (posicion del buffer), empezando por el final:
     //  1. Sumamos ambos numeros.
     //  2. Si las suma pasa de 100 acarreamos para el siguiente par y restamos 100 a este par.
     bool acarreo = false;
-    for(int i = long_ents + long_decs - 1; i > 0; --i) {
+    for(int i = long_buffer - 1; i > 0; --i) {
         int op1 = static_cast<int>(this->buffer[i]);
-        int op2 = static_cast<int>(d.buffer[i]);
+        int op2 = static_cast<int>(temp.buffer[i]);
         int op3 = op1 + op2;
 
         if(acarreo) ++op3;
@@ -240,6 +245,10 @@ decimal &decimal::operator+=(const decimal &d)
 
         this->buffer[i] = static_cast<uint8_t>(op3);
     }
+
+    // Comprobamos que no nos hayamos salido de rango.
+    if(buffer[0] > 99)
+        throw std::out_of_range("La suma ha producido desbordamiento.");
 
     return *this;
 }
@@ -258,10 +267,13 @@ void decimal::resize(unsigned int _c, unsigned int _d)
     unsigned int    _e = _c - _d;
     unsigned int    le = static_cast<int>((_e - 1)/2) + 1;
     unsigned int    ld = static_cast<int>((_d - 1)/2) + 1;
-    uint8_t         *temp = new uint8_t[le + ld];
+    unsigned int    lb = le + ld;
+    uint8_t         *temp = new uint8_t[lb];
 
-    std::memset(temp, 0x00, sizeof(uint8_t[le + ld]));
+    std::memset(temp, 0x00, sizeof(uint8_t[lb]));
 
+    // Empezaremos por los enteros, por si después con los decimales
+    // es necesario aplicar redondeo.
     if(_e < ents) {
         // Tenemos que reducir el numero de enteros, asi que debemos
         // comprobar que no se produce desbordamiento.
@@ -282,29 +294,57 @@ void decimal::resize(unsigned int _c, unsigned int _d)
         int dif = long_ents - le;
 
         if(buffer[dif] > max_val) {
-            std::cout << "buffer[dif] = " << utiles::IntToStr(dif) << ", " << utiles::IntToStr(buffer[dif]) << "\n";
             delete [] temp;
             throw std::out_of_range("Cambio de tamanio imposible.");
         }
 
         for(int i = dif - 1; i >= 0; --i) {
             if(buffer[i] != 0x00) {
-                std::cout << "buffer[i] = " << utiles::IntToStr(buffer[i]) << "\n";
                 delete [] temp;
                 throw std::out_of_range("Cambio de tamanio imposible.");
             }
         }
         // Llegados aquí, quiere decir que los enteros caben en el nuevo
         // tamaño, así que copiamos los datos desde ents-1 hasta diff.
-        for(int i = ents - 1; i >= dif; --i)
-            temp[i-dif] = buffer[i];
+        for(int i = long_ents - 1, j = le - 1; j >= 0; --i, --j)
+            temp[j] = buffer[i];
+    }
+    else {
+        for(int i = long_ents - 1, j = le - 1; i >= 0; --i, --j)
+            temp[j] = buffer[i];
+    }
+
+    // Ahora los decimales.
+    if(_d < decs) {
+        // Tendremos que redondear, si es necesario.
+        // TODO:
+        //  1. Calcular la diferencia de bytes.
+        //  2. Eliminar el último byte, y redondear todo el decimal.
+        //  3. Repetir para todos los bytes a eliminar.
+        unsigned int dif        = long_decs - ld;
+        unsigned int max_val    = 0;
+
+        if((_d % 2) != 0)
+            max_val = 90;
+        else
+            max_val = 99;
+
+
+
+
+
+    }
+    else {
+        for(unsigned int i = long_ents, j = le; i < long_buffer; ++i, ++j)
+            temp[j] = buffer[i];
     }
 
     // Actualizamos los datos.
-    ents = _e;
-    decs = _d;
-    long_ents = le;
-    long_decs = ld;
+    ents        = _e;
+    decs        = _d;
+    long_ents   = le;
+    long_decs   = ld;
+    long_buffer = lb;
 
     delete [] buffer;
     buffer = temp;

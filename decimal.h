@@ -21,7 +21,7 @@ class decimal {
     public:
         // Constructores
         decimal(unsigned int _c, unsigned int _d);
-        decimal(decimal &d);
+        decimal(const decimal &d);
 
         // Destructor
         ~decimal();
@@ -53,10 +53,11 @@ class decimal {
     private:
         uint8_t *buffer;
 
-        unsigned int ents;      // Total enteros del número.
-        unsigned int long_ents; // Tamaño del array para los enteros: ((ents - 1)/2) + 1
-        unsigned int decs;      // Total decimales del número.
-        unsigned int long_decs; // Tamaño del array para los decimales: ((decs - 1)/2) + 1
+        unsigned int ents;          // Total enteros del número.
+        unsigned int long_ents;     // Tamaño del array para los enteros: ((ents - 1)/2) + 1
+        unsigned int decs;          // Total decimales del número.
+        unsigned int long_decs;     // Tamaño del array para los decimales: ((decs - 1)/2) + 1
+        unsigned int long_buffer;   // Tamaño total del buffer: long_ents + long_decs
 
         void convertir(const std::string &str);
 
