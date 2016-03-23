@@ -26,14 +26,35 @@ class decimal {
         // Destructor
         ~decimal();
 
-        // Operadores
+        // Operadores - Asignación.
         decimal &operator=(const decimal &d);
         decimal &operator=(const std::string &val);
 
+        // Operadores - Suma y Resta.
         decimal &operator+=(const decimal &d);
         friend decimal operator+(decimal a, const decimal &b)
         {
             a += b;
+            return a;
+        }
+        decimal &operator-=(const decimal &d);
+        friend decimal operator-(decimal a, const decimal &b)
+        {
+            a -= b;
+            return a;
+        }
+
+        // Operadores - Multiplicación y división.
+        decimal &operator*=(const decimal &d);
+        friend decimal operator*(decimal a, const decimal &b)
+        {
+            a *= b;
+            return a;
+        }
+        decimal &operator/=(const decimal &d);
+        friend decimal operator/(decimal a, const decimal &b)
+        {
+            a /= b;
             return a;
         }
 
@@ -60,7 +81,20 @@ class decimal {
         unsigned int long_buffer;   // Tamaño total del buffer: long_ents + long_decs
 
         void convertir(const std::string &str);
+        bool is_negative() const
+        {
+            // El bit más significativo del primer byte del array nos indicará
+            // si el decimal es negatvo o positivo.
+            return ((buffer[0] & 0x80) == 0x80);
+        }
 
+        void set_negative(bool negative)
+        {
+            if(negative)
+                buffer[0] |= 0x80;
+            else
+                buffer[0] &= 0x7F;
+        }
 
 };
 
