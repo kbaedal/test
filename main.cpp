@@ -43,8 +43,12 @@ int main()
     mysql_close(my_con);
     */
     decimal a(10, 5);
+    decimal b(10, 5);
 
-    a = "-1.0";
+    a = "2.0";
+    b = "10.0";
+
+    a = a - b;
 
     std::cout << a << "\n";
 

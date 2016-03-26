@@ -111,6 +111,14 @@ decimal &decimal::operator=(const std::string &val)
 
 decimal &decimal::operator+=(const decimal &d)
 {
+    /***
+     * ¡¡¡ OJO !!!
+     *
+     * Hay que tener en cuenta el signo de los operadores, que ahora
+     * no lo tengo en cuenta. Implemento la resta y luego ya veo
+     * por donde tirar con esto, que debe ser muy parecido.
+     *
+    ***/
     unsigned int max_val_e = ((ents % 2) != 0) ? 9 : 99;
 
     // Cambiamos el tamaño del decimal a sumar. Con esto garantizamos dos cosas:
@@ -151,6 +159,31 @@ decimal &decimal::operator+=(const decimal &d)
 
 decimal &decimal::operator-=(const decimal &d)
 {
+    /***
+     *  RESTA CHUNGA DE LA MUE-TE
+     *
+     *  Tenemos la resta típica:
+     *
+     *      M inuendo
+     *    - S ustraendo
+     *     ---
+     *      R esultado
+     *
+     *  Dependiendo del signo de M y de S, y de su valor absoluto, tendremos que
+     *  realizar una operación u otra:
+     *      - Si M(+) y S(+):
+     *          - Si abs(M) >= abs(S) R = ABS(M) - ABS(S), R(+).
+     *          - Si abs(S) > abs(M) R = ABS(S) - ABS(M), R(-).
+     *      - Si M(+) y S(-) R = ABS(M) + ABS(S), R(+).
+     *      - Si M(-) y S(+):
+     *          - Si abs(M) >= abs(S) R = ABS(M) + ABS(S), R(-).
+     *          - Si abs(S) > abs(M) R = ABS(S) + ABS(M), R(+).
+     *      - Si M(-) y S(-)
+     *          - Si abs(M) >= abs(S) R = ABS(M) - ABS(S), R(-).
+     *          - Si abs(S) > abs(M) R = ABS(S) - ABS(M), R(+).
+     *
+    ***/
+
     unsigned int max_val_e = ((ents % 2) != 0) ? 9 : 99;
 
     // Cambiamos el tamaño del decimal a sumar. Con esto garantizamos dos cosas:
@@ -181,6 +214,8 @@ decimal &decimal::operator-=(const decimal &d)
 
         this->buffer[i] = static_cast<uint8_t>(op3);
     }
+
+    if(acarreo) this->set_negative(true);
 
     // Comprobamos que no nos hayamos salido de rango.
     if(buffer[0] > max_val_e)
