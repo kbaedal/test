@@ -226,12 +226,12 @@ decimal &decimal::operator-=(const decimal &d)
 
 decimal &decimal::operator*=(const decimal &d)
 {
-
+    return *this;
 }
 
 decimal &decimal::operator/=(const decimal &d)
 {
-
+    return *this;
 }
 
 void decimal::resize(unsigned int _c, unsigned int _d)
@@ -302,7 +302,7 @@ void decimal::resize(unsigned int _c, unsigned int _d)
 
         // Procesamos los bytes a eliminar, para ver si una vez eliminados
         // tenemos que acarrear al último byte del nuevo tamaño.
-        for(int i = long_buffer - 1; i >= long_buffer - dif - 1; --i) {
+        for(int i = long_buffer - 1; i >= static_cast<int>(long_buffer - dif - 1); --i) {
             if(acarreo) ++buffer[i];
 
             if(buffer[i] > 49)
@@ -312,7 +312,7 @@ void decimal::resize(unsigned int _c, unsigned int _d)
         }
 
         // Copiamos la parte del buffer que si cabe en el temporal.
-        for(int i = long_ents, j = le; j < lb; ++i, ++j) {
+        for(int i = long_ents, j = le; j < static_cast<int>(lb); ++i, ++j) {
             temp[j] = buffer[i];
         }
 
@@ -324,7 +324,7 @@ void decimal::resize(unsigned int _c, unsigned int _d)
             if(acarreo)
                 ++temp[i];
 
-            if(i == lb - 1) {
+            if(i == static_cast<int>(lb - 1)) {
                 // El último byte. Podrá tener un valor máximo
                 // dependiendo del numero de cifras del decimal.
                 if(temp[i] > max_val_d) {
@@ -522,6 +522,108 @@ std::string decimal::to_str() const
         else
             temp += utiles::IntToStr(static_cast<int>(x), 2);
     }
+
+    return temp;
+}
+
+bool operator==(const decimal &a, const decimal &b)
+{
+    std::cout << "Comparando a == b\n";
+    // 1. Comparamos signos. Si son diferentes devolvemos falso.
+    // 2. Cambiamos el tamaño de b para que coincida con el de a.
+    // 3. Comparamos byte a byte.
+
+    if(a.is_negative() != b.is_negative()) return false;
+
+    decimal temp(b);
+    temp.resize(a.decs + a.ents, a.decs);
+
+    for(int i = static_cast<int>(a.long_buffer - 1); i >= 0; --i)
+        if(a.buffer[i] != temp.buffer[i])
+            return false;
+
+    return true;
+}
+
+bool operator>=(const decimal &a, const decimal &b)
+{
+    std::cout << "Comparando a >= b\n";
+    // 1. Comparamos signos. Si son distintos, el positivo es el mayor.
+    // 2. Cambiamos el tamaño de b para que coincida con el de a.
+    // 3. Comparamos byte a byte, y devolvemos en consecuencia.
+
+    if(a.is_negative() != b.is_negative()) {
+        if(a.is_negative())
+            return false;
+        else
+            return true;
+    }
+
+    decimal temp(b);
+    temp.resize(a.decs + a.ents, a.decs);
+
+    bool    a_mayor = false,
+            iguales = true;
+
+    for(int i = 0; i < static_cast<int>(a.long_buffer); ++i) {
+        if(a.buffer[i] != temp.buffer[i]) {
+            iguales = false;
+            if(a.buffer[i] > temp.buffer[i]) {
+                a_mayor = true;
+            }
+            break;
+        }
+    }
+
+    if(iguales)
+        return true;
+
+    // Invertimos el resultado si a y b son negativos.
+    return a.is_negative() ? !a_mayor : a_mayor;
+}
+
+bool operator<=(const decimal &a, const decimal &b)
+{
+    std::cout << "Comparando a <= b\n";
+    // 1. Comparamos signos. Si son distintos, el negativo es el menor.
+    // 2. Cambiamos el tamaño de b para que coincida con el de a.
+    // 3. Comparamos byte a byte, y devolvemos en consecuencia.
+
+    if(a.is_negative() != b.is_negative()) {
+        if(a.is_negative())
+            return true;
+        else
+            return false;
+    }
+
+    decimal temp(b);
+    temp.resize(a.decs + a.ents, a.decs);
+
+    bool    a_menor = false,
+            iguales = true;
+
+    for(int i = 0; i < static_cast<int>(a.long_buffer); ++i) {
+        if(a.buffer[i] != temp.buffer[i]) {
+            iguales = false;
+            if(a.buffer[i] < temp.buffer[i]) {
+                a_menor = true;
+            }
+            break;
+        }
+    }
+
+    if(iguales)
+        return true;
+
+    // Invertimos el resultado si a y b son negativos.
+    return a.is_negative() ? !a_menor : a_menor;
+}
+
+decimal decimal::abs() const
+{
+    decimal temp(*this);
+
+    temp.buffer[0] &= 0x7F;
 
     return temp;
 }

@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <string>
+#include <iostream>
 
 #include "utiles.h"
 
@@ -58,6 +59,30 @@ class decimal {
             return a;
         }
 
+        // Operadores - Comparacion.
+        friend bool operator==(const decimal &a, const decimal &b);
+        friend bool operator!=(const decimal &a, const decimal &b)
+        {
+            std::cout << "Comparando a != b\n";
+            return !(a == b);
+        }
+
+        friend bool operator>=(const decimal &a, const decimal &b);
+        friend bool operator<=(const decimal &a, const decimal &b);
+
+        friend bool operator>(const decimal &a, const decimal &b)
+        {
+            std::cout << "Comparando a > b\n";
+            return !(a <= b);
+        }
+
+        friend bool operator<(const decimal &a, const decimal &b)
+        {
+            std::cout << "Comparando a < b\n";
+            return !(a >= b);
+        }
+
+
         friend std::ostream &operator << (std::ostream &os, const decimal &d)
         {
             os << d.to_str();
@@ -70,6 +95,8 @@ class decimal {
         // Cambia el tamaño del decimal, redondeando si es necesario
         // o lanzando excepción si se produce desbordamiento.
         void resize(unsigned int _c, unsigned int _d);
+        // Devuelve el valor absoluto.
+        decimal abs() const;
 
     private:
         uint8_t *buffer;
@@ -78,6 +105,7 @@ class decimal {
         unsigned int long_ents;     // Tamaño del array para los enteros: ((ents - 1)/2) + 1
         unsigned int decs;          // Total decimales del número.
         unsigned int long_decs;     // Tamaño del array para los decimales: ((decs - 1)/2) + 1
+        unsigned int cifs;          // Total cifras del número (enteros + decimales).
         unsigned int long_buffer;   // Tamaño total del buffer: long_ents + long_decs
 
         void convertir(const std::string &str);

@@ -45,12 +45,17 @@ int main()
     decimal a(10, 5);
     decimal b(10, 5);
 
-    a = "2.0";
-    b = "10.0";
+    a = "1.0";
+    b = "-0.1";
 
-    a = a - b;
-
-    std::cout << a << "\n";
+    if(a > b)
+        std::cout << a << " es mayor que " << b << "\n";
+    else if(a < b)
+        std::cout << a << " es menor que " << b << "\n";
+    else if(a == b)
+        std::cout << a << " es igual que " << b << "\n";
+    else
+        std::cout << a << " es distinto que " << b << "\n";
 
     return 0;
 }
