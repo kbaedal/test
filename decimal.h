@@ -63,7 +63,6 @@ class decimal {
         friend bool operator==(const decimal &a, const decimal &b);
         friend bool operator!=(const decimal &a, const decimal &b)
         {
-            std::cout << "Comparando a != b\n";
             return !(a == b);
         }
 
@@ -72,16 +71,13 @@ class decimal {
 
         friend bool operator>(const decimal &a, const decimal &b)
         {
-            std::cout << "Comparando a > b\n";
             return !(a <= b);
         }
 
         friend bool operator<(const decimal &a, const decimal &b)
         {
-            std::cout << "Comparando a < b\n";
             return !(a >= b);
         }
-
 
         friend std::ostream &operator << (std::ostream &os, const decimal &d)
         {
@@ -90,11 +86,13 @@ class decimal {
             return os;
         }
 
-        // Devuleve el decimal como cadena de caracteres.
+        // Devuelve el decimal como cadena de caracteres.
         std::string to_str() const;
+
         // Cambia el tamaño del decimal, redondeando si es necesario
         // o lanzando excepción si se produce desbordamiento.
         void resize(unsigned int _c, unsigned int _d);
+
         // Devuelve el valor absoluto.
         decimal abs() const;
 
@@ -116,13 +114,32 @@ class decimal {
             return ((buffer[0] & 0x80) == 0x80);
         }
 
-        void set_negative(bool negative)
+        void set_negative()
         {
-            if(negative)
-                buffer[0] |= 0x80;
-            else
-                buffer[0] &= 0x7F;
+            buffer[0] |= 0x80;
         }
+
+        void set_positive()
+        {
+            buffer[0] &= 0x7F;
+        }
+
+        // Suma al decimal los datos de sum. Condiciones:
+        //  1. sizeof(sum) == sizeof(buffer)
+        //  2. Ambos datos deben ser positivos.
+        void suma(const uint8_t *sum);
+
+        // Resta del decimal los datos de res. Condiciones:
+        //  1. sizeof(res) == sizeof(buffer)
+        //  2. Ambos datos deben ser positivos.
+        //  3. La resta debe dar un resultado positivo.
+        void resta(const uint8_t *res);
+
+        // Multiplica por 10 num veces.
+        void mul10(unsigned int num);
+
+        // Divide entre 10 num veces.
+        void div10(unsigned int num);
 
 };
 

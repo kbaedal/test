@@ -63,7 +63,7 @@ decimal &decimal::operator=(const std::string &val)
     if(es_numero(temp)) {
         // Comprobamos si es negativo.
         if(temp[0] == '-') {
-            this->set_negative(true);
+            this->set_negative();
             temp.erase(0, 1);
         }
         // Calculamos numero de cifras, parte entera y parte decimal.
@@ -112,45 +112,74 @@ decimal &decimal::operator=(const std::string &val)
 decimal &decimal::operator+=(const decimal &d)
 {
     /***
-     * ¡¡¡ OJO !!!
+     *  SUMA HYPER-CHEATING
      *
-     * Hay que tener en cuenta el signo de los operadores, que ahora
-     * no lo tengo en cuenta. Implemento la resta y luego ya veo
-     * por donde tirar con esto, que debe ser muy parecido.
+     *  Tenemos la resta típica:
+     *
+     *      S1
+     *    + S2
+     *     ----
+     *       R
+     *
+     *  Dependiendo del signo de S1 y de S2, y de su valor absoluto, tendremos que
+     *  realizar una operación u otra:
+     *      - Si S1(+) y S2(+): R = abs(S1) + abs(S2), R(+)
+     *      - Si S1(+) y S2(-):
+     *          - Si abs(S1) >= abs(S2): R = abs(S1) - abs(S2), R(+).
+     *          - Si abs(S1) < abs(S2): R = abs(S2) - abs(S1), R(-).
+     *      - Si S1(-) y S2(+):
+     *          - Si abs(S1) >= abs(S2): R = abs(S1) - abs(S2), R(-).
+     *          - Si abs(S1) < abs(S2): R = abs(S2) - abs(S1), R(+).
+     *      - Si S1(-) y S2(-): R = abs(S1) + abs(S2), R(-)
      *
     ***/
+
     unsigned int max_val_e = ((ents % 2) != 0) ? 9 : 99;
 
     // Cambiamos el tamaño del decimal a sumar. Con esto garantizamos dos cosas:
     //  1. Que la suma se pueda realizar (mismo numero de enteros y decimales).
     //  2. Que se haya redondeado el decimal correctamente.
-    decimal temp(d);
-    temp.resize(ents + decs, decs);
+    decimal s2(d);
+    s2.resize(ents + decs, decs);
 
-    // Por cada pareja de numeros (posicion del buffer), empezando por el final:
-    //  1. Sumamos ambos numeros.
-    //  2. Si las suma pasa de 100 acarreamos para el siguiente par y restamos 100 a este par.
-    bool acarreo = false;
-    for(int i = long_buffer - 1; i > 0; --i) {
-        int op1 = static_cast<int>(this->buffer[i]);
-        int op2 = static_cast<int>(temp.buffer[i]);
-        int op3 = op1 + op2;
+    if(!this->is_negative() && !s2.is_negative()) { // S1(+), S2(+)
+        suma(s2.buffer);
+    }
+    else if(!this->is_negative() && s2.is_negative()) { // S1(+), S2(-)
+        s2.set_positive(); // Ambos son positivos ahora.
 
-        if(acarreo) ++op3;
-
-        if(op3 >= 100) {
-            acarreo = true;
-            op3 -= 100;
+        if(*this >= s2) {
+            resta(s2.buffer);
         }
         else {
-            acarreo = false;
+            s2.resta(buffer);
+            *this = s2;
+            this->set_negative();
         }
+    }
+    else if(this->is_negative() && !s2.is_negative()) { // S1(-), S2(+)
+        this->set_positive(); // Ambos positivos ahora.
 
-        this->buffer[i] = static_cast<uint8_t>(op3);
+        if(*this >= s2) {
+            resta(s2.buffer);
+            this->set_negative();
+        }
+        else {
+            s2.resta(buffer);
+            *this = s2;
+        }
+    }
+    else if(this->is_negative() && s2.is_negative()) { // S1(-), S2(-)
+        // Ambos positivos.
+        this->set_positive();
+        s2.set_positive();
+
+        suma(s2.buffer);
+        this->set_negative();
     }
 
     // Comprobamos que no nos hayamos salido de rango.
-    if(buffer[0] > max_val_e)
+    if((buffer[0] & 0x7F) > max_val_e)
         throw std::out_of_range("La suma ha producido desbordamiento.");
 
     return *this;
@@ -172,15 +201,13 @@ decimal &decimal::operator-=(const decimal &d)
      *  Dependiendo del signo de M y de S, y de su valor absoluto, tendremos que
      *  realizar una operación u otra:
      *      - Si M(+) y S(+):
-     *          - Si abs(M) >= abs(S) R = ABS(M) - ABS(S), R(+).
-     *          - Si abs(S) > abs(M) R = ABS(S) - ABS(M), R(-).
-     *      - Si M(+) y S(-) R = ABS(M) + ABS(S), R(+).
-     *      - Si M(-) y S(+):
-     *          - Si abs(M) >= abs(S) R = ABS(M) + ABS(S), R(-).
-     *          - Si abs(S) > abs(M) R = ABS(S) + ABS(M), R(+).
-     *      - Si M(-) y S(-)
-     *          - Si abs(M) >= abs(S) R = ABS(M) - ABS(S), R(-).
-     *          - Si abs(S) > abs(M) R = ABS(S) - ABS(M), R(+).
+     *          - Si abs(M) >= abs(S) R = abs(M) - abs(S), R(+).
+     *          - Si abs(M) < abs(S) R = abs(S) - abs(M), R(-).
+     *      - Si M(+) y S(-): R = abs(M) + abs(S), R(+).
+     *      - Si M(-) y S(+): R = abs(M) + abs(S), R(-).
+     *      - Si M(-) y S(-):
+     *          - Si abs(M) >= abs(S) R = abs(M) - abs(S), R(-).
+     *          - Si abs(M) < abs(S) R = abs(S) - abs(M), R(+).
      *
     ***/
 
@@ -189,16 +216,90 @@ decimal &decimal::operator-=(const decimal &d)
     // Cambiamos el tamaño del decimal a sumar. Con esto garantizamos dos cosas:
     //  1. Que la suma se pueda realizar (mismo numero de enteros y decimales).
     //  2. Que se haya redondeado el decimal correctamente.
-    decimal temp(d);
-    temp.resize(ents + decs, decs);
+    decimal ss(d);
+    ss.resize(ents + decs, decs);
 
+    if(!this->is_negative() && !ss.is_negative()) { // M(+), S(+)
+        if(*this >= ss) {
+            resta(ss.buffer);
+        }
+        else {
+            ss.resta(buffer);
+            *this = ss;
+            this->set_negative();
+        }
+    }
+    else if(!this->is_negative() && ss.is_negative()) { // M(+), S(-)
+        ss.set_positive(); // Ambos positivos.
+
+        suma(ss.buffer);
+    }
+    else if(this->is_negative() && !ss.is_negative()) { // M(-), S(+)
+        this->set_positive(); // Ambos positivos ahora.
+
+        suma(ss.buffer);
+        this->set_negative();
+    }
+    else if(this->is_negative() && ss.is_negative()) { // M(-), S(-)
+        // Los hacemos positivos.
+        this->set_positive();
+        ss.set_positive();
+
+        if(*this >= ss) {
+            resta(ss.buffer);
+            this->set_negative();
+        }
+        else {
+            ss.resta(buffer);
+            *this = ss;
+        }
+    }
+
+    // Comprobamos que no nos hayamos salido de rango.
+    if((buffer[0] & 0x7F) > max_val_e)
+        throw std::out_of_range("La resta ha producido desbordamiento.");
+
+    return *this;
+}
+
+void decimal::suma(const uint8_t *sum)
+{
     // Por cada pareja de numeros (posicion del buffer), empezando por el final:
     //  1. Sumamos ambos numeros.
     //  2. Si las suma pasa de 100 acarreamos para el siguiente par y restamos 100 a este par.
+
     bool acarreo = false;
+
     for(int i = long_buffer - 1; i > 0; --i) {
-        int op1 = static_cast<int>(this->buffer[i]);
-        int op2 = static_cast<int>(temp.buffer[i]);
+        int op1 = static_cast<int>(buffer[i]);
+        int op2 = static_cast<int>(sum[i]);
+        int op3 = op1 + op2;
+
+        if(acarreo) ++op3;
+
+        if(op3 >= 100) {
+            acarreo = true;
+            op3 -= 100;
+        }
+        else {
+            acarreo = false;
+        }
+
+        buffer[i] = static_cast<uint8_t>(op3);
+    }
+}
+
+void decimal::resta(const uint8_t *res)
+{
+    // Por cada pareja de numeros (posicion del buffer), empezando por el final:
+    //  1. Comprobamos si operador 1 es mayor o igual operador 2.
+    //  2. Si lo es, restamos. Si no, añadimos 100, indicando acarreo para el siguiente, y restamos.
+
+    bool acarreo = false;
+
+    for(int i = long_buffer - 1; i > 0; --i) {
+        int op1 = static_cast<int>(buffer[i]);
+        int op2 = static_cast<int>(res[i]);
 
         if(acarreo) ++op2;
 
@@ -212,16 +313,8 @@ decimal &decimal::operator-=(const decimal &d)
 
         int op3 = op1 - op2;
 
-        this->buffer[i] = static_cast<uint8_t>(op3);
+        buffer[i] = static_cast<uint8_t>(op3);
     }
-
-    if(acarreo) this->set_negative(true);
-
-    // Comprobamos que no nos hayamos salido de rango.
-    if(buffer[0] > max_val_e)
-        throw std::out_of_range("La resta ha producido desbordamiento.");
-
-    return *this;
 }
 
 decimal &decimal::operator*=(const decimal &d)
@@ -528,7 +621,6 @@ std::string decimal::to_str() const
 
 bool operator==(const decimal &a, const decimal &b)
 {
-    std::cout << "Comparando a == b\n";
     // 1. Comparamos signos. Si son diferentes devolvemos falso.
     // 2. Cambiamos el tamaño de b para que coincida con el de a.
     // 3. Comparamos byte a byte.
@@ -538,7 +630,7 @@ bool operator==(const decimal &a, const decimal &b)
     decimal temp(b);
     temp.resize(a.decs + a.ents, a.decs);
 
-    for(int i = static_cast<int>(a.long_buffer - 1); i >= 0; --i)
+    for(int i = 0; i < static_cast<int>(a.long_buffer); ++i)
         if(a.buffer[i] != temp.buffer[i])
             return false;
 
@@ -547,10 +639,10 @@ bool operator==(const decimal &a, const decimal &b)
 
 bool operator>=(const decimal &a, const decimal &b)
 {
-    std::cout << "Comparando a >= b\n";
     // 1. Comparamos signos. Si son distintos, el positivo es el mayor.
     // 2. Cambiamos el tamaño de b para que coincida con el de a.
     // 3. Comparamos byte a byte, y devolvemos en consecuencia.
+    std::cout << "Comparando " << a << " y " << b << "\n";
 
     if(a.is_negative() != b.is_negative()) {
         if(a.is_negative())
@@ -584,7 +676,6 @@ bool operator>=(const decimal &a, const decimal &b)
 
 bool operator<=(const decimal &a, const decimal &b)
 {
-    std::cout << "Comparando a <= b\n";
     // 1. Comparamos signos. Si son distintos, el negativo es el menor.
     // 2. Cambiamos el tamaño de b para que coincida con el de a.
     // 3. Comparamos byte a byte, y devolvemos en consecuencia.
