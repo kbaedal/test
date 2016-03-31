@@ -525,20 +525,27 @@ int get_datos_cliente(MYSQL *my_con, int codigo, Cliente &c)
 // hay un punto.
 bool es_numero(const std::string &str)
 {
-    std::string temp = str;
+    std::string t = str;
 
-    utiles::trim(temp);
+    utiles::trim(t);
 
-    // Comprobamos que solo contenga números, guiones y puntos.
-    size_t valid_chars = temp.find_first_not_of("-0123456789.");
+    // Comprobamos que solo contenga números, signos más o menos, y puntos.
+    size_t valid_chars = t.find_first_not_of("+-0123456789.");
 
-    // Contamos el número de puntos.
-    size_t num_points = std::count(temp.begin(), temp.end(), '.');
+    // Contamos el número de puntos. Como máximo habrá uno.
+    size_t num_points = std::count(t.begin(), t.end(), '.');
 
-    // Y averiguamos la posición del guión.
-    size_t pos_minus = temp.find_first_of('-');
+    // Averiguamos la posición del signo menos, si lo hay.
+    size_t pos_minus = t.find_first_of('-');
+
+    // Averiguamos la posición del signo más, si lo hay.
+    size_t pos_plus = t.find_first_of('+');
 
     // Si todos son caracteres válidos, hay como máximo un punto, y si
-    // hay un guión está al principio, entonces tenemos un número válido.
-    return (valid_chars == std::string::npos) && (num_points <= 1) && (pos_minus == 0 || pos_minus == std::string::npos);
+    // hay un menos o un mas al principio, tenemos un numero válido.
+    return (valid_chars == std::string::npos) && (num_points <= 1) && (
+        (pos_minus == 0 && pos_plus == std::string::npos) || // Hay un signo menos, y no hay signo más.
+        (pos_plus == 0 && pos_minus == std::string::npos) || // Hay un singo más, y no hay signo menos.
+        ((pos_minus == std::string::npos) && (pos_plus == std::string::npos)) // No hay signo alguno.
+    );
 }

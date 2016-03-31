@@ -42,20 +42,22 @@ int main()
 
     mysql_close(my_con);
     */
-    decimal a(10, 5);
-    decimal b(10, 5);
-    decimal c(10, 5);
+    decimal a(4, 3);
+    decimal b(4, 3);
+    decimal c(4, 3);
 
-    a = "10.00001";
-    b = "-89.99999";
+    a = "1.234";
+    b = "1.234";
+
+    // a * b = 1.5240
 
     c = a + b;
 
     std::cout << a << " + " << b << " = " << c << "\n";
 
-    c = a - b;
+    c = a * b;
 
-    std::cout << a << " - " << b << " = " << c << "\n";
+    std::cout << a << " * " << b << " = " << c << "\n";
 
     return 0;
 }

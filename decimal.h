@@ -103,7 +103,7 @@ class decimal {
         unsigned int long_ents;     // Tamaño del array para los enteros: ((ents - 1)/2) + 1
         unsigned int decs;          // Total decimales del número.
         unsigned int long_decs;     // Tamaño del array para los decimales: ((decs - 1)/2) + 1
-        unsigned int cifs;          // Total cifras del número (enteros + decimales).
+
         unsigned int long_buffer;   // Tamaño total del buffer: long_ents + long_decs
 
         void convertir(const std::string &str);

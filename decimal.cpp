@@ -23,8 +23,10 @@ decimal::decimal(const decimal &d)
 {
     ents        = d.ents;
     decs        = d.decs;
+
     long_ents   = d.long_ents;
     long_decs   = d.long_decs;
+
     long_buffer = d.long_buffer;
 
     buffer = new uint8_t[long_buffer];
@@ -40,10 +42,10 @@ decimal::~decimal()
 
 decimal &decimal::operator=(const decimal &d) {
     if(this != &d) {
-        decimal temp(d);
-        temp.resize(ents + decs, decs);
+        decimal t(d);
+        t.resize(ents + decs, decs);
 
-        std::memcpy(buffer, temp.buffer, sizeof(uint8_t[long_buffer]));
+        std::memcpy(buffer, t.buffer, sizeof(uint8_t[long_buffer]));
     }
     return *this;
 }
@@ -111,7 +113,7 @@ decimal &decimal::operator=(const std::string &val)
 
 decimal &decimal::operator+=(const decimal &d)
 {
-    /***
+    /*
      *  SUMA HYPER-CHEATING
      *
      *  Tenemos la resta típica:
@@ -132,7 +134,7 @@ decimal &decimal::operator+=(const decimal &d)
      *          - Si abs(S1) < abs(S2): R = abs(S2) - abs(S1), R(+).
      *      - Si S1(-) y S2(-): R = abs(S1) + abs(S2), R(-)
      *
-    ***/
+     */
 
     unsigned int max_val_e = ((ents % 2) != 0) ? 9 : 99;
 
@@ -188,7 +190,7 @@ decimal &decimal::operator+=(const decimal &d)
 
 decimal &decimal::operator-=(const decimal &d)
 {
-    /***
+    /*
      *  RESTA CHUNGA DE LA MUE-TE
      *
      *  Tenemos la resta típica:
@@ -209,7 +211,7 @@ decimal &decimal::operator-=(const decimal &d)
      *          - Si abs(M) >= abs(S) R = abs(M) - abs(S), R(-).
      *          - Si abs(M) < abs(S) R = abs(S) - abs(M), R(+).
      *
-    ***/
+     */
 
     unsigned int max_val_e = ((ents % 2) != 0) ? 9 : 99;
 
@@ -319,6 +321,71 @@ void decimal::resta(const uint8_t *res)
 
 decimal &decimal::operator*=(const decimal &d)
 {
+    // Declaramos un temporal que tendrá siempre un numero
+    // par de cifras, y que será como minimo igual de grande
+    // que el decimal original. Así garantizamos que las
+    // operaciones de multiplicacion se realizan siempre
+    // sobre números de dos cifras, y se almacenan correctamente
+    // en el buffer temporal.
+    int _e  = (ents % 2) != 0 ? ents + 1 : ents;
+    int _d  = (decs % 2) != 0 ? decs + 1 : decs;
+    int _lb = long_buffer * 2;
+    decimal r((_e+_d) * 2, _d * 2);
+
+    // Y un buffer donde almacenar nuestras multiplicaciones.
+    uint8_t *res_mult = new uint8_t[_lb];
+    std::memset(res_mult, 0x00, sizeof(uint8_t[_lb]));
+
+    // Hacemos que el multiplicador sea del mismo tamaño.
+    decimal t(d);
+    t.resize(ents+decs, decs);
+
+    // Calculamos el signo del resultado.
+    // Negativo si signos diferentes, positivo si iguales.
+    bool res_negativo = (this->is_negative() != t.is_negative());
+
+    // Hacemos que ambos sean positivos.
+    this->set_positive();
+    t.set_positive();
+
+    // Multiplicamos por parejas y sumamos, colocando el resultado
+    // en el lugar adecuado.
+    for(int i = long_buffer - 1; i >= 0; --i) {
+        for(int j = long_buffer -1; j >= 0; --j) {
+            // Limpiamos nuestro buffer temporal.
+            std::memset(res_mult, 0x00, sizeof(uint8_t[_lb]));
+
+            // Multiplicamos la pareja.
+            // Sabemos que el valor máximo de cada par es 99, por lo que
+            // el resultado máximo posible es 9801.
+            int m   = static_cast<int>(buffer[i]);
+            int n   = static_cast<int>(t.buffer[j]);
+            int mxn = m * n;
+
+            // Posicion a escribir en el buffer temporal.
+            int x = j + i + 1;
+
+            // En cada byte, su valor correspondiente.
+            uint8_t l_par = static_cast<uint8_t>(mxn % 10 + ((mxn / 10) % 10) * 10);
+            uint8_t h_par = static_cast<uint8_t>((mxn / 100) % 10 + ((mxn / 1000) % 10) * 10);
+
+            // Los colocamos en su lugar correspondiente del buffer.
+            res_mult[x]     = l_par;
+            res_mult[x - 1] = h_par;
+
+            // Sumamos al resultado.
+            r.suma(res_mult);
+        }
+    }
+
+    r.resize(ents + decs, decs);
+    *this = r;
+
+    if(res_negativo)
+        this->set_negative();
+
+    delete [] res_mult;
+
     return *this;
 }
 
@@ -329,12 +396,13 @@ decimal &decimal::operator/=(const decimal &d)
 
 void decimal::resize(unsigned int _c, unsigned int _d)
 {
-    // TODO:
+    // Proceso:
     //  1. Comprobar el numero de enteros. Si es mayor que el
     //      que tenemos, no hay problema. En caso contrario,
     //      comprobar el desboradamiento.
     //  2. Para los decimales, simplemente tendremos que tener
     //      ciudado con el redondeo.
+
     if((_c - _d) < 0)
         throw std::invalid_argument("Numero de decimales incompatible con numero de cifras.");
 
@@ -342,12 +410,17 @@ void decimal::resize(unsigned int _c, unsigned int _d)
     unsigned int    le = static_cast<int>((_e - 1)/2) + 1;
     unsigned int    ld = static_cast<int>((_d - 1)/2) + 1;
     unsigned int    lb = le + ld;
-    uint8_t         *temp = new uint8_t[lb];
+    uint8_t         *t = new uint8_t[lb];
 
     unsigned int    max_val_e   = ((_e % 2) != 0) ? 9 : 99;
     unsigned int    max_val_d   = ((_d % 2) != 0) ? 94 : 99;
 
-    std::memset(temp, 0x00, sizeof(uint8_t[lb]));
+    // Almacenamos el signo, y hacemos el numero positivo, para
+    // las siguientes comprobaciones.
+    bool signo = this->is_negative();
+    this->set_positive();
+
+    std::memset(t, 0x00, sizeof(uint8_t[lb]));
 
     // Empezaremos por los enteros, por si después con los decimales
     // es necesario aplicar redondeo.
@@ -362,30 +435,29 @@ void decimal::resize(unsigned int _c, unsigned int _d)
         int dif = long_ents - le;
 
         if(buffer[dif] > max_val_e) {
-            delete [] temp;
+            delete [] t;
             throw std::out_of_range("Cambio de tamanio imposible.");
         }
 
         for(int i = dif - 1; i >= 0; --i) {
             if(buffer[i] != 0x00) {
-                delete [] temp;
+                delete [] t;
                 throw std::out_of_range("Cambio de tamanio imposible.");
             }
         }
         // Llegados aquí, quiere decir que los enteros caben en el nuevo
         // tamaño, así que copiamos los datos desde ents-1 hasta diff.
         for(int i = long_ents - 1, j = le - 1; j >= 0; --i, --j)
-            temp[j] = buffer[i];
+            t[j] = buffer[i];
     }
     else {
         for(int i = long_ents - 1, j = le - 1; i >= 0; --i, --j)
-            temp[j] = buffer[i];
+            t[j] = buffer[i];
     }
 
     // Ahora los decimales.
     if(_d < decs) {
         // Tendremos que redondear, si es necesario.
-        // TODO:
         //  1. Calcular la diferencia de bytes.
         //  2. Eliminar el último byte, y redondear todo el decimal.
         //  3. Repetir para todos los bytes a eliminar.
@@ -406,36 +478,41 @@ void decimal::resize(unsigned int _c, unsigned int _d)
 
         // Copiamos la parte del buffer que si cabe en el temporal.
         for(int i = long_ents, j = le; j < static_cast<int>(lb); ++i, ++j) {
-            temp[j] = buffer[i];
+            t[j] = buffer[i];
         }
 
         // Ahora procesamos todo el temporal, para comprobar que todo va bien.
         // Tendremos que comprobar que si el acarreo nos ha hecho incrementar
         // la parte entera, esta no se salga de rango.
         acarreo = false;
+
         for(int i = lb - 1; i >= 0; --i) {
             if(acarreo)
-                ++temp[i];
+                ++t[i];
 
             if(i == static_cast<int>(lb - 1)) {
                 // El último byte. Podrá tener un valor máximo
                 // dependiendo del numero de cifras del decimal.
-                if(temp[i] > max_val_d) {
+                if(t[i] > max_val_d) {
                     // Nuestro último numero produce acarreo.
                     // Ponemos a 0 e indicamos.
-                    temp[i] = 0;
+                    t[i] = 0;
                     acarreo = true;
                 }
                 else if((_d % 2) != 0) {
                     // En caso de que el nuevo decimal solo pueda
                     // almacenar un numero impar de cifras, hay que
-                    // poner a 0 la menos significativa del par.
-                    temp[i] /= 10;
-                    temp[i] *= 10;
+                    // poner a 0 la menos significativa del par,
+                    // y comprobar que esta última cifra no produce
+                    // acarreo a la siguiente.
+                    if((t[i] % 10) > 4)
+                        t[i] = (((t[i] / 10) % 10) + 1) * 10;
+                    else
+                        t[i] = ((t[i] / 10) % 10) * 10;
                 }
             }
-            else if(temp[i] >= 100) {
-                temp[i] = 0;
+            else if(t[i] >= 100) {
+                t[i] = 0;
                 acarreo = true;
             }
             else {
@@ -444,14 +521,14 @@ void decimal::resize(unsigned int _c, unsigned int _d)
         }
 
         // Comprobamos que no nos hayamos salido de rango.
-        if(temp[0] > max_val_e) {
-            delete [] temp;
+        if((t[0] & 0x7F) > max_val_e) {
+            delete [] t;
             throw std::out_of_range("Cambio de tamanio imposible.");
         }
     }
     else {
         for(unsigned int i = long_ents, j = le; i < long_buffer; ++i, ++j)
-            temp[j] = buffer[i];
+            t[j] = buffer[i];
     }
 
     // Actualizamos los datos.
@@ -462,8 +539,11 @@ void decimal::resize(unsigned int _c, unsigned int _d)
     long_buffer = lb;
 
     delete [] buffer;
-    buffer = temp;
-    temp = nullptr;
+    buffer  = t;
+    t       = nullptr;
+
+    if(signo)
+        this->set_negative();
 }
 
 void decimal::convertir(const std::string &str)
@@ -642,7 +722,6 @@ bool operator>=(const decimal &a, const decimal &b)
     // 1. Comparamos signos. Si son distintos, el positivo es el mayor.
     // 2. Cambiamos el tamaño de b para que coincida con el de a.
     // 3. Comparamos byte a byte, y devolvemos en consecuencia.
-    std::cout << "Comparando " << a << " y " << b << "\n";
 
     if(a.is_negative() != b.is_negative()) {
         if(a.is_negative())
@@ -651,16 +730,16 @@ bool operator>=(const decimal &a, const decimal &b)
             return true;
     }
 
-    decimal temp(b);
-    temp.resize(a.decs + a.ents, a.decs);
+    decimal t(b);
+    t.resize(a.decs + a.ents, a.decs);
 
     bool    a_mayor = false,
             iguales = true;
 
     for(int i = 0; i < static_cast<int>(a.long_buffer); ++i) {
-        if(a.buffer[i] != temp.buffer[i]) {
+        if(a.buffer[i] != t.buffer[i]) {
             iguales = false;
-            if(a.buffer[i] > temp.buffer[i]) {
+            if(a.buffer[i] > t.buffer[i]) {
                 a_mayor = true;
             }
             break;
@@ -712,9 +791,20 @@ bool operator<=(const decimal &a, const decimal &b)
 
 decimal decimal::abs() const
 {
-    decimal temp(*this);
+    decimal t(*this);
 
-    temp.buffer[0] &= 0x7F;
+    t.set_positive();
 
-    return temp;
+    return t;
 }
+
+void decimal::mul10(unsigned int num)
+{
+
+}
+
+void decimal::div10(unsigned int num)
+{
+
+}
+
