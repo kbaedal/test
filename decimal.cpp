@@ -389,8 +389,55 @@ decimal &decimal::operator*=(const decimal &d)
     return *this;
 }
 
+decimal decimal::inverse() const
+{
+    // Método Newton-Raphson:
+    //  - Obtener una estimacion x(0) de 1/decimal, para lo que
+    //    se calculan estimaciones más precisas de x(1), x(2), ..., x(s).
+    //  - Para aplicar el metodo se necesita una funcion f(x) que sea 0 cuando
+    //    x = 1/decimal. En este caso, f(x) = (1/x) - d. Para esta funcion,
+    //    el método Newton-Raphson resuelve:
+    //
+    //                        f(x(i))
+    //      x(i+1) = x(i) - ----------
+    //                       f'(x(i))
+    //    Sustituyendo:
+    //
+    //                        1/x(i) - d
+    //      x(i+1) = x(i) - ------------- = x(i) + x(i) * (1 - d * x(i))
+    //                       -1/(x(i)^2)
+    //
+    //    Luego:
+    //
+    //      x(i+1) = x(i) * (2 - d * x(i))
+    //
+    //    Repetimos el cálculo hasta que 1-p <= d * x <= 1+p, donde p es la
+    //    precision que queremos en el cálculo.
+    //
+    //  - Codigo:
+    //
+    //      p = PRECISION;
+    //      x = p;
+    //      while((x * d) > 1 + p || (x * d) < 1 - p)
+    //          x = x * (2 - d*x);
+
+    decimal p(ents+decs, decs),
+            i(ents+decs, decs);
+
+    // Le damos a p el menor valor posible.
+    p.buffer[long_buffer-1] = (decs % 2) != 0 ? 10 : 1;
+
+    i = p;
+
+    while((i * *this) > ("1" + p) || (i * *this) < ("1" - p))
+        i = i * ("2" - *this * i);
+
+    return i;
+}
+
 decimal &decimal::operator/=(const decimal &d)
 {
+
     return *this;
 }
 

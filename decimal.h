@@ -38,11 +38,40 @@ class decimal {
             a += b;
             return a;
         }
+        friend decimal operator+(decimal a, const std::string &val)
+        {
+            decimal t(a.ents + a.decs, a.decs);
+            t = val;
+            a += t;
+
+            return a;
+        }
+        friend decimal operator+(const std::string &val, decimal a)
+        {
+            return a + val;
+        }
+
         decimal &operator-=(const decimal &d);
         friend decimal operator-(decimal a, const decimal &b)
         {
             a -= b;
             return a;
+        }
+        friend decimal operator-(decimal a, const std::string &val)
+        {
+            decimal t(a.ents + a.decs, a.decs);
+            t = val;
+            a -= t;
+
+            return a;
+        }
+        friend decimal operator-(const std::string &val, decimal a)
+        {
+            decimal t(a.ents + a.decs, a.decs);
+            t = val;
+            t -= a;
+
+            return t;
         }
 
         // Operadores - Multiplicación y división.
@@ -135,6 +164,11 @@ class decimal {
         //  3. La resta debe dar un resultado positivo.
         void resta(const uint8_t *res);
 
+    public:
+        // Obtiene el inverso multiplicativo, tal que i*d = 1.
+        decimal inverse() const;
+
+    private:
         // Multiplica por 10 num veces.
         void mul10(unsigned int num);
 
