@@ -10,8 +10,8 @@
 decimal::decimal(unsigned int _c, unsigned int _d) : ents(_c - _d), decs(_d)
 {
     // Reservamos 8 bits por cada dos cifras.
-    long_ents   = static_cast<int>((ents - 1)/2) + 1;
-    long_decs   = static_cast<int>((decs - 1)/2) + 1;
+    long_ents   = ents != 0 ? static_cast<int>((ents - 1)/2) + 1 : 0;
+    long_decs   = decs != 0 ? static_cast<int>((decs - 1)/2) + 1 : 0;
     long_buffer = long_ents + long_decs;
 
     buffer      = new uint8_t[long_buffer];
@@ -29,7 +29,7 @@ decimal::decimal(const decimal &d)
 
     long_buffer = d.long_buffer;
 
-    buffer = new uint8_t[long_buffer];
+    buffer      = new uint8_t[long_buffer];
 
     std::memset(buffer, 0x00, sizeof(uint8_t[long_buffer]));
     std::memcpy(buffer, d.buffer, sizeof(uint8_t[long_buffer]));
@@ -392,8 +392,8 @@ decimal &decimal::operator*=(const decimal &d)
 decimal decimal::inverse() const
 {
     // Método Newton-Raphson:
-    //  - Obtener una estimacion x(0) de 1/decimal, para lo que
-    //    se calculan estimaciones más precisas de x(1), x(2), ..., x(s).
+    //  - Obtener una estimacion x(0) de 1/decimal, para lo que calculamos
+    //    estimaciones cada vez más precisas de x(1), x(2), ..., x(s).
     //  - Para aplicar el metodo se necesita una funcion f(x) que sea 0 cuando
     //    x = 1/decimal. En este caso, f(x) = (1/x) - d. Para esta funcion,
     //    el método Newton-Raphson resuelve:
@@ -412,31 +412,74 @@ decimal decimal::inverse() const
     //      x(i+1) = x(i) * (2 - d * x(i))
     //
     //    Repetimos el cálculo hasta que 1-p <= d * x <= 1+p, donde p es la
-    //    precision que queremos en el cálculo.
+    //    precision que queremos en el cálculo, o hasta que x(i+1) = x(i), que
+    //    quiere decir que hemos llegado a la solución ideal.
     //
     //  - Codigo:
     //
     //      p = PRECISION;
     //      x = p;
-    //      while((x * d) > 1 + p || (x * d) < 1 - p)
-    //          x = x * (2 - d*x);
+    //      r = 0;
+    //      while((x * d) > 1 + p || (x * d) < 1 - p) {
+    //          r = x * (2 - d*x);
+    //          if(r == x) fin_while;
+    //          else x = r;
+    //      }
 
-    decimal p(ents+decs, decs),
-            i(ents+decs, decs);
+    decimal p(ents + decs, decs),
+            x(p),
+            r(p);
 
     // Le damos a p el menor valor posible.
-    p.buffer[long_buffer-1] = (decs % 2) != 0 ? 10 : 1;
+    p = p.min();
 
-    i = p;
+    x = p;
+    r = "0";
 
-    while((i * *this) > ("1" + p) || (i * *this) < ("1" - p))
-        i = i * ("2" - *this * i);
+    while((x * *this) >= ("1" + p) || (x * *this) <= ("1" - p)) {
+        r = x * ("2" - *this * x);
 
-    return i;
+        if(r == x)
+            break;
+        else
+            x = r;
+    }
+
+    return r;
 }
 
 decimal &decimal::operator/=(const decimal &d)
 {
+    // Utilizaremos un decimal con un numero par de cifras y
+    // un par extra tanto de decimales como de enteros que el
+    // original, para asegurar la precision de la division.
+    int _e  = (ents % 2) != 0 ? ents + 1 : ents;
+    int _d  = (decs % 2) != 0 ? decs + 1 : decs;
+    decimal r(_e + _d + 4, _d + 2),
+            n(_e + _d + 4, _d + 2),
+            z(2, 1);
+
+    bool res_negativo = this->is_negative() != d.is_negative();
+
+    z = "0.0";
+
+    if(d.abs() == z)
+        throw std::invalid_argument("Division entre 0.");
+
+    n = *this;
+    r = d;
+
+    r.set_positive();
+    r = r.inverse();
+
+    r = n * r;
+
+    r.resize(ents + decs, decs);
+
+    *this = r;
+
+    if(res_negativo)
+        this->set_negative();
 
     return *this;
 }
@@ -448,7 +491,7 @@ void decimal::resize(unsigned int _c, unsigned int _d)
     //      que tenemos, no hay problema. En caso contrario,
     //      comprobar el desboradamiento.
     //  2. Para los decimales, simplemente tendremos que tener
-    //      ciudado con el redondeo.
+    //      cuIdado con el redondeo.
 
     if((_c - _d) < 0)
         throw std::invalid_argument("Numero de decimales incompatible con numero de cifras.");
@@ -754,11 +797,11 @@ bool operator==(const decimal &a, const decimal &b)
 
     if(a.is_negative() != b.is_negative()) return false;
 
-    decimal temp(b);
-    temp.resize(a.decs + a.ents, a.decs);
+    decimal t(b);
+    t.resize(a.decs + a.ents, a.decs);
 
     for(int i = 0; i < static_cast<int>(a.long_buffer); ++i)
-        if(a.buffer[i] != temp.buffer[i])
+        if(a.buffer[i] != t.buffer[i])
             return false;
 
     return true;
@@ -845,13 +888,46 @@ decimal decimal::abs() const
     return t;
 }
 
-void decimal::mul10(unsigned int num)
+decimal decimal::max() const
 {
+    // Ojo, varias posibilidades:
+    //  1. Solo decimales.
+    //  2. Solo enteros.
+    //  3. Decimales y enteros.
 
+    decimal t(*this);
+
+    uint8_t max_val_inicio  = ((ents % 2) != 0) ? 9 : 99;
+    uint8_t max_val_final   = ((decs % 2) != 0) ? 90 : 99;
+    uint8_t max_val_num     = 99;
+
+    for(int i = 0; i < long_buffer; ++i) {
+        if(i == 0 && ents != 0)
+            t.buffer[i] = max_val_inicio;
+        else if(i == long_buffer-1 && decs != 0)
+            t.buffer[i] = max_val_final;
+        else
+            t.buffer[i] = max_val_num;
+    }
+
+    return t;
 }
 
-void decimal::div10(unsigned int num)
+decimal decimal::min() const
 {
+    // Poner todo a cero y el ultimo byte a los que
+    // corresponda según las cifras que tengamos y si
+    // hay decimales o no.
+    decimal t(*this);
 
+    for(int i = 0; i < long_buffer; ++i)
+        t.buffer[i] = 0;
+
+    if(decs != 0)
+        t.buffer[long_buffer-1] = ((decs % 2) != 0) ? 10 : 01;
+    else
+        t.buffer[long_buffer-1] = 1;
+
+    return t;
 }
 

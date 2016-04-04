@@ -81,11 +81,44 @@ class decimal {
             a *= b;
             return a;
         }
+        friend decimal operator*(decimal a, const std::string &val)
+        {
+            decimal t(a.ents + a.decs, a.decs);
+            t = val;
+            a *= t;
+
+            return a;
+        }
+        friend decimal operator*(const std::string &val, decimal a)
+        {
+            decimal t(a.ents + a.decs, a.decs);
+            t = val;
+            t *= a;
+
+            return t;
+        }
+
         decimal &operator/=(const decimal &d);
         friend decimal operator/(decimal a, const decimal &b)
         {
             a /= b;
             return a;
+        }
+        friend decimal operator/(decimal a, const std::string &val)
+        {
+            decimal t(a.ents + a.decs, a.decs);
+            t = val;
+            a /= t;
+
+            return a;
+        }
+        friend decimal operator/(const std::string &val, decimal a)
+        {
+            decimal t(a.ents + a.decs, a.decs);
+            t = val;
+            t /= a;
+
+            return t;
         }
 
         // Operadores - Comparacion.
@@ -124,6 +157,12 @@ class decimal {
 
         // Devuelve el valor absoluto.
         decimal abs() const;
+
+        // Devuelve el maximo valor almacenable por el decimal.
+        decimal max() const;
+
+        // Devuelve el minimo valor almacenable por el decimal.
+        decimal min() const;
 
     private:
         uint8_t *buffer;
@@ -164,16 +203,8 @@ class decimal {
         //  3. La resta debe dar un resultado positivo.
         void resta(const uint8_t *res);
 
-    public:
         // Obtiene el inverso multiplicativo, tal que i*d = 1.
         decimal inverse() const;
-
-    private:
-        // Multiplica por 10 num veces.
-        void mul10(unsigned int num);
-
-        // Divide entre 10 num veces.
-        void div10(unsigned int num);
 
 };
 
