@@ -148,12 +148,12 @@ class decimal {
             return os;
         }
 
-        // Devuelve el decimal como cadena de caracteres.
-        std::string to_str() const;
-
         // Cambia el tamaño del decimal, redondeando si es necesario
         // o lanzando excepción si se produce desbordamiento.
         void resize(unsigned int _c, unsigned int _d);
+
+        // Devuelve el decimal como cadena de caracteres.
+        std::string to_str() const;
 
         // Devuelve el valor absoluto.
         decimal abs() const;
@@ -163,6 +163,9 @@ class decimal {
 
         // Devuelve el minimo valor almacenable por el decimal.
         decimal min() const;
+
+        // Devuelve un decimal de las mismas caracteristicas que d pero a 0.
+        decimal zero() const;
 
     private:
         uint8_t *buffer;

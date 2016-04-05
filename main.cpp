@@ -42,11 +42,11 @@ int main()
 
     mysql_close(my_con);
     */
-    decimal a(12, 6);
-    decimal b(12, 6);
+    decimal a(60, 30);
+    decimal b(60, 30);
 
-    a = "10";
-    b = "5.432111";
+    a = "6999.99999";
+    b = ".007";
 
     std::cout << a.to_str() << " / " << b.to_str() << " = " << (a/b).to_str() << "\n";
 
