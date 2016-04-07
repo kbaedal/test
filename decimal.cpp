@@ -7,6 +7,8 @@
 #include "cosas.h"
 #include "utiles.h"
 
+namespace fpt {
+
 decimal::decimal(unsigned int _c, unsigned int _d) : ents(_c - _d), decs(_d)
 {
     // Reservamos 8 bits por cada dos cifras.
@@ -64,7 +66,7 @@ decimal &decimal::operator=(const std::string &val)
 
     size_t  pos_punto;
 
-    if(es_numero(temp)) {
+    if(utiles::es_numero(temp)) {
         // Comprobamos si es negativo.
         if(temp[0] == '-') {
             this->set_negative();
@@ -91,9 +93,7 @@ decimal &decimal::operator=(const std::string &val)
         if(e > ents) {
             int i = 0;
             while(e > ents) {
-                char cifra = temp[i];
-
-                if(utiles::StrToInt(cifra) != 0)
+                if(static_cast<char>(temp[i]) != '0')
                     throw std::out_of_range("El numero pasado no encaja en este decimal.");
 
                 // Avanzamos por la cadena.
@@ -439,13 +439,13 @@ decimal decimal::inverse() const
             r(ents + decs, decs);
 
     // Le damos a p el menor valor posible.
-    p = p.min();
+    p = min(p);
 
     // E inicializamos el resultado con este valor.
     x = p;
 
     // Y la variable de control a 0.
-    r = r.zero();
+    r = zero(r);
 
     // Aplicamos Newton-Raphson
     while((x * *this) > ("1" + p) || (x * *this) < ("1" - p)) {
@@ -476,7 +476,7 @@ decimal &decimal::operator/=(const decimal &d)
 
     bool res_negativo = this->is_negative() != d.is_negative();
 
-    if(d.abs() == d.zero())
+    if(abs(d) == zero(d))
         throw std::invalid_argument("Division entre 0.");
 
     n = *this;
@@ -891,32 +891,32 @@ bool operator<=(const decimal &a, const decimal &b)
     return a.is_negative() ? !a_menor : a_menor;
 }
 
-decimal decimal::abs() const
+decimal abs(const decimal &v)
 {
-    decimal t(*this);
+    decimal t(v);
 
     t.set_positive();
 
     return t;
 }
 
-decimal decimal::max() const
+decimal max(const decimal &v)
 {
     // Ojo, varias posibilidades:
     //  1. Solo decimales.
     //  2. Solo enteros.
     //  3. Decimales y enteros.
 
-    decimal t(*this);
+    decimal t(v);
 
-    uint8_t max_val_inicio  = ((ents % 2) != 0) ? 9 : 99;
-    uint8_t max_val_final   = ((decs % 2) != 0) ? 90 : 99;
+    uint8_t max_val_inicio  = ((t.ents % 2) != 0) ? 9 : 99;
+    uint8_t max_val_final   = ((t.decs % 2) != 0) ? 90 : 99;
     uint8_t max_val_num     = 99;
 
-    for(int i = 0; i < static_cast<int>(long_buffer); ++i) {
-        if(i == 0 && ents != 0)
+    for(int i = 0; i < static_cast<int>(t.long_buffer); ++i) {
+        if(i == 0 && t.ents != 0)
             t.buffer[i] = max_val_inicio;
-        else if(i == static_cast<int>(long_buffer - 1) && decs != 0)
+        else if(i == static_cast<int>(t.long_buffer - 1) && t.decs != 0)
             t.buffer[i] = max_val_final;
         else
             t.buffer[i] = max_val_num;
@@ -925,31 +925,32 @@ decimal decimal::max() const
     return t;
 }
 
-decimal decimal::min() const
+decimal min(const decimal &v)
 {
     // Poner todo a cero y el ultimo byte a los que
     // corresponda según las cifras que tengamos y si
     // hay decimales o no.
-    decimal t(*this);
+    decimal t(v);
 
-    for(int i = 0; i < static_cast<int>(long_buffer); ++i)
+    for(int i = 0; i < static_cast<int>(t.long_buffer); ++i)
         t.buffer[i] = 0;
 
-    if(decs != 0)
-        t.buffer[long_buffer-1] = ((decs % 2) != 0) ? 10 : 01;
+    if(t.decs != 0)
+        t.buffer[t.long_buffer-1] = ((t.decs % 2) != 0) ? 10 : 01;
     else
-        t.buffer[long_buffer-1] = 1;
+        t.buffer[t.long_buffer-1] = 1;
 
     return t;
 }
 
-
-decimal decimal::zero() const
+decimal zero(const decimal &v)
 {
-    decimal t(*this);
+    decimal t(v);
 
-    std::memset(t.buffer, 0x00, sizeof(uint8_t[long_buffer]));
+    std::memset(t.buffer, 0x00, sizeof(uint8_t[t.long_buffer]));
 
     return t;
 }
+
+}; // namespace fpt
 

@@ -42,12 +42,15 @@ int main()
 
     mysql_close(my_con);
     */
-    decimal a(60, 30);
-    decimal b(60, 30);
+    fpt::decimal a(13, 5);
+    fpt::decimal b(13, 5);
 
-    a = "6999.99999";
-    b = ".007";
+    a = "20.0";
+    b = "5.0001";
 
+    std::cout << a.to_str() << " + " << b.to_str() << " = " << (a+b).to_str() << "\n";
+    std::cout << a.to_str() << " - " << b.to_str() << " = " << (a-b).to_str() << "\n";
+    std::cout << a.to_str() << " * " << b.to_str() << " = " << (a*b).to_str() << "\n";
     std::cout << a.to_str() << " / " << b.to_str() << " = " << (a/b).to_str() << "\n";
 
     return 0;

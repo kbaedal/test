@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <algorithm>
 
 #include "utiles.h"
 
@@ -885,7 +886,6 @@ void utiles::setTextToISO20022(std::string &cadena)
     cadena = temp;
 }
 
-
 bool utiles::checkNum(std::string numero)
 {
     /*
@@ -980,6 +980,33 @@ bool utiles::checkNum(std::string numero)
 	// Si hemos llegado hasta aquí, quiere decir que la cadena leída
 	// tiene el formato adecuado para ser convertida a float.
 	return true;
+}
+
+bool utiles::es_numero(const std::string &str)
+{
+    std::string t = str;
+
+    utiles::trim(t);
+
+    // Comprobamos que solo contenga números, signos más o menos, y puntos.
+    size_t valid_chars = t.find_first_not_of("+-0123456789.");
+
+    // Contamos el número de puntos. Como máximo habrá uno.
+    size_t num_points = std::count(t.begin(), t.end(), '.');
+
+    // Averiguamos la posición del signo menos, si lo hay.
+    size_t pos_minus = t.find_first_of('-');
+
+    // Averiguamos la posición del signo más, si lo hay.
+    size_t pos_plus = t.find_first_of('+');
+
+    // Si todos son caracteres válidos, hay como máximo un punto, y si
+    // hay un menos o un mas al principio, tenemos un numero válido.
+    return (valid_chars == std::string::npos) && (num_points <= 1) && (
+        (pos_minus == 0 && pos_plus == std::string::npos) || // Hay un signo menos, y no hay signo más.
+        (pos_plus == 0 && pos_minus == std::string::npos) || // Hay un singo más, y no hay signo menos.
+        ((pos_minus == std::string::npos) && (pos_plus == std::string::npos)) // No hay signo alguno.
+    );
 }
 
 std::string utiles::pasarMayusculas(const std::string &s)

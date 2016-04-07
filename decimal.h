@@ -18,6 +18,8 @@
 // significar que queremos un numero de 12 cifras en total,
 // de las cuales 4 son la parte decimal: EEEEEEEE.DDDD
 
+namespace fpt {
+
 class decimal {
     public:
         // Constructores
@@ -155,17 +157,17 @@ class decimal {
         // Devuelve el decimal como cadena de caracteres.
         std::string to_str() const;
 
-        // Devuelve el valor absoluto.
-        decimal abs() const;
+        // Devuelve un decimal con el valor absoluto de v.
+        friend decimal abs(const decimal &v);
 
-        // Devuelve el maximo valor almacenable por el decimal.
-        decimal max() const;
+        // Devuelve un decimal con el valor maximo que puede tener v.
+        friend decimal max(const decimal &v);
 
-        // Devuelve el minimo valor almacenable por el decimal.
-        decimal min() const;
+        // Devuelve un decimal con el valor minimo que puede tener v.
+        friend decimal min(const decimal &v);
 
-        // Devuelve un decimal de las mismas caracteristicas que d pero a 0.
-        decimal zero() const;
+        // Devuelve un decimal de iguales caracteristicas que v, pero con valor 0.
+        friend decimal zero(const decimal &v);
 
     private:
         uint8_t *buffer;
@@ -208,8 +210,9 @@ class decimal {
 
         // Obtiene el inverso multiplicativo, tal que i*d = 1.
         decimal inverse() const;
-
 };
+
+}; // Namespace fpt
 
 #endif // DECIMAL_H_INCLUDED
 

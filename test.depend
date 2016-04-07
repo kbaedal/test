@@ -479,11 +479,11 @@
 	<mysql.h>
 	"utiles.h"
 
-1457371897 c:\develop\projects\test\utiles.h
+1459941067 c:\develop\projects\test\utiles.h
 	<string>
 	<vector>
 
-1459357948 source:c:\develop\projects\test\cosas.cpp
+1459941103 source:c:\develop\projects\test\cosas.cpp
 	<cstdio>
 	<cstdlib>
 	<cstring>
@@ -508,7 +508,7 @@
 	"utiles.h"
 	"cliente.h"
 
-1459868122 source:c:\develop\projects\test\decimal.cpp
+1460027606 source:c:\develop\projects\test\decimal.cpp
 	<exception>
 	<cstring>
 	<sstream>
@@ -517,20 +517,20 @@
 	"cosas.h"
 	"utiles.h"
 
-1459867729 c:\develop\projects\test\decimal.h
+1460029164 c:\develop\projects\test\decimal.h
 	<cstdint>
 	<string>
 	<iostream>
 	"utiles.h"
 
-1459867649 source:c:\develop\projects\test\main.cpp
+1460027936 source:c:\develop\projects\test\main.cpp
 	<iostream>
 	<string>
 	<mysql.h>
 	"cosas.h"
 	"decimal.h"
 
-1457371933 source:c:\develop\projects\test\utiles.cpp
+1459941298 source:c:\develop\projects\test\utiles.cpp
 	<cstdio>
 	<cstdlib>
 	<cstring>
@@ -540,5 +540,6 @@
 	<fstream>
 	<sstream>
 	<string>
+	<algorithm>
 	"utiles.h"
 

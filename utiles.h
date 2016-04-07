@@ -292,6 +292,12 @@ void setTextToISO20022(std::string &cadena);
  */
 bool checkNum(std::string numero);
 
+// Comprueba que la string pasada está compuesta es un número válido:
+//  - Tiene signo, ya sea + ó -, en la primera posición, o bien no lo tiene.
+//  - Está compuesto de números enteramente.
+//  - Contiene un solo separador decimal, en este caso el punto.
+bool es_numero(const std::string &str);
+
 /*!
  * \brief Pasa a mayusculas, si es posible. Solo para ASCII.
  *
