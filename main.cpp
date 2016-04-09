@@ -6,8 +6,6 @@
 #include "cosas.h"
 #include "decimal.h"
 
-
-
 int main()
 {
     /*
@@ -45,13 +43,19 @@ int main()
     fpt::decimal a(13, 5);
     fpt::decimal b(13, 5);
 
-    a = "20.0";
-    b = "5.0001";
+    a = "-100.0";
+    b = "-21.000";
 
     std::cout << a.to_str() << " + " << b.to_str() << " = " << (a+b).to_str() << "\n";
     std::cout << a.to_str() << " - " << b.to_str() << " = " << (a-b).to_str() << "\n";
     std::cout << a.to_str() << " * " << b.to_str() << " = " << (a*b).to_str() << "\n";
     std::cout << a.to_str() << " / " << b.to_str() << " = " << (a/b).to_str() << "\n";
+
+    std::cout << "max(a) :  " << a.max().to_str() << "\n";
+    std::cout << "min(a) :  " << a.min().to_str() << "\n";
+    std::cout << "abs(a) :  " << a.abs().to_str() << "\n";
+    std::cout << "zero(a) : " << a.zero().to_str() << "\n";
+    std::cout << "-a:       " << (-a).to_str() << "\n";
 
     return 0;
 }

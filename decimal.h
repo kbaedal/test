@@ -33,6 +33,19 @@ class decimal {
         decimal &operator=(const decimal &d);
         decimal &operator=(const std::string &val);
 
+        // Operadors - Negación
+        decimal operator-()
+        {
+            decimal t(*this);
+
+            if(t.is_negative())
+                t.set_positive();
+            else
+                t.set_negative();
+
+            return t;
+        }
+
         // Operadores - Suma y Resta.
         decimal &operator+=(const decimal &d);
         friend decimal operator+(decimal a, const decimal &b)
@@ -158,16 +171,16 @@ class decimal {
         std::string to_str() const;
 
         // Devuelve un decimal con el valor absoluto de v.
-        friend decimal abs(const decimal &v);
+        decimal abs() const;
 
         // Devuelve un decimal con el valor maximo que puede tener v.
-        friend decimal max(const decimal &v);
+        decimal max() const;
 
         // Devuelve un decimal con el valor minimo que puede tener v.
-        friend decimal min(const decimal &v);
+        decimal min() const;
 
         // Devuelve un decimal de iguales caracteristicas que v, pero con valor 0.
-        friend decimal zero(const decimal &v);
+        decimal zero() const;
 
     private:
         uint8_t *buffer;

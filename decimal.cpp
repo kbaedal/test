@@ -1,10 +1,8 @@
-#include <exception>
+#include <string>
 #include <cstring>
-#include <sstream>
-#include <bitset>
+#include <stdexcept>
 
 #include "decimal.h"
-#include "cosas.h"
 #include "utiles.h"
 
 namespace fpt {
@@ -116,9 +114,7 @@ decimal &decimal::operator=(const std::string &val)
 decimal &decimal::operator+=(const decimal &d)
 {
     /*
-     *  SUMA HYPER-CHEATING
-     *
-     *  Tenemos la suma típica:
+     *  Suma:
      *
      *      S1
      *    + S2
@@ -193,9 +189,7 @@ decimal &decimal::operator+=(const decimal &d)
 decimal &decimal::operator-=(const decimal &d)
 {
     /*
-     *  RESTA CHUNGA DE LA MUE-TE
-     *
-     *  Tenemos la resta típica:
+     *  Resta:
      *
      *      M inuendo
      *    - S ustraendo
@@ -217,8 +211,8 @@ decimal &decimal::operator-=(const decimal &d)
 
     unsigned int max_val_e = ((ents % 2) != 0) ? 9 : 99;
 
-    // Cambiamos el tamaño del decimal a sumar. Con esto garantizamos dos cosas:
-    //  1. Que la suma se pueda realizar (mismo numero de enteros y decimales).
+    // Cambiamos el tamaño del decimal a restar. Con esto garantizamos dos cosas:
+    //  1. Que la resta se pueda realizar (mismo numero de enteros y decimales).
     //  2. Que se haya redondeado el decimal correctamente.
     decimal ss(d);
     ss.resize(ents + decs, decs);
@@ -275,9 +269,9 @@ void decimal::suma(const uint8_t *sum)
     bool acarreo = false;
 
     for(int i = long_buffer - 1; i > 0; --i) {
-        int op1 = static_cast<int>(buffer[i]);
-        int op2 = static_cast<int>(sum[i]);
-        int op3 = op1 + op2;
+        uint8_t op1 = buffer[i];
+        uint8_t op2 = sum[i];
+        uint8_t op3 = op1 + op2;
 
         if(acarreo) ++op3;
 
@@ -289,7 +283,7 @@ void decimal::suma(const uint8_t *sum)
             acarreo = false;
         }
 
-        buffer[i] = static_cast<uint8_t>(op3);
+        buffer[i] = op3;
     }
 }
 
@@ -302,8 +296,8 @@ void decimal::resta(const uint8_t *res)
     bool acarreo = false;
 
     for(int i = long_buffer - 1; i > 0; --i) {
-        int op1 = static_cast<int>(buffer[i]);
-        int op2 = static_cast<int>(res[i]);
+        uint8_t op1 = buffer[i];
+        uint8_t op2 = res[i];
 
         if(acarreo) ++op2;
 
@@ -317,7 +311,7 @@ void decimal::resta(const uint8_t *res)
 
         int op3 = op1 - op2;
 
-        buffer[i] = static_cast<uint8_t>(op3);
+        buffer[i] = op3;
     }
 }
 
@@ -439,13 +433,13 @@ decimal decimal::inverse() const
             r(ents + decs, decs);
 
     // Le damos a p el menor valor posible.
-    p = min(p);
+    p = p.min();
 
     // E inicializamos el resultado con este valor.
     x = p;
 
     // Y la variable de control a 0.
-    r = zero(r);
+    r = r.zero();
 
     // Aplicamos Newton-Raphson
     while((x * *this) > ("1" + p) || (x * *this) < ("1" - p)) {
@@ -468,29 +462,32 @@ decimal &decimal::operator/=(const decimal &d)
     // Utilizaremos un decimal con un numero par de cifras y
     // el doble de tamaño del original para asegurar la precisión
     // del cáculo.
-    int _e  = (ents % 2) != 0 ? ents + 1 : ents;
-    int _d  = (decs % 2) != 0 ? decs + 1 : decs;
-
-    decimal r((_e + _d) * 2, _d * 2),
-            n((_e + _d) * 2, _d * 2);
-
-    bool res_negativo = this->is_negative() != d.is_negative();
-
-    if(abs(d) == zero(d))
+    if(d.abs() == d.zero()) {
         throw std::invalid_argument("Division entre 0.");
+    }
+    else {
+        int _e  = (ents % 2) != 0 ? ents + 1 : ents;
+        int _d  = (decs % 2) != 0 ? decs + 1 : decs;
 
-    n = *this;
-    r = d;
+        decimal r((_e + _d) * 2, _d * 2),
+                n((_e + _d) * 2, _d * 2);
 
-    r.set_positive();
-    r = r.inverse();
+        bool res_negativo = (this->is_negative() != d.is_negative());
 
-    *this = n * r;
+        n = *this;
+        r = d;
 
-    if(res_negativo)
-        this->set_negative();
+        n.set_positive();
+        r.set_positive();
+        r = r.inverse();
 
-    return *this;
+        *this = n * r;
+
+        if(res_negativo)
+            this->set_negative();
+
+        return *this;
+    }
 }
 
 void decimal::resize(unsigned int _c, unsigned int _d)
@@ -659,8 +656,8 @@ void decimal::convertir(const std::string &str)
     if(orig[0] == '-')
         orig.erase(0, 1);
 
-    size_t      pos_punto_t = temp.find_first_of('.'),
-                pos_punto_o = orig.find_first_of('.');
+    size_t  pos_punto_t = temp.find_first_of('.'),
+            pos_punto_o = orig.find_first_of('.');
 
     // Equiparamos los tamaños de las partes entera y decimal.
     if(pos_punto_t != std::string::npos) {
@@ -825,12 +822,8 @@ bool operator>=(const decimal &a, const decimal &b)
     // 2. Cambiamos el tamaño de b para que coincida con el de a.
     // 3. Comparamos byte a byte, y devolvemos en consecuencia.
 
-    if(a.is_negative() != b.is_negative()) {
-        if(a.is_negative())
-            return false;
-        else
-            return true;
-    }
+    if(a.is_negative() != b.is_negative())
+        return !a.is_negative();
 
     decimal t(b);
     t.resize(a.decs + a.ents, a.decs);
@@ -861,23 +854,19 @@ bool operator<=(const decimal &a, const decimal &b)
     // 2. Cambiamos el tamaño de b para que coincida con el de a.
     // 3. Comparamos byte a byte, y devolvemos en consecuencia.
 
-    if(a.is_negative() != b.is_negative()) {
-        if(a.is_negative())
-            return true;
-        else
-            return false;
-    }
+    if(a.is_negative() != b.is_negative())
+        return a.is_negative();
 
-    decimal temp(b);
-    temp.resize(a.decs + a.ents, a.decs);
+    decimal t(b);
+    t.resize(a.decs + a.ents, a.decs);
 
     bool    a_menor = false,
             iguales = true;
 
     for(int i = 0; i < static_cast<int>(a.long_buffer); ++i) {
-        if(a.buffer[i] != temp.buffer[i]) {
+        if(a.buffer[i] != t.buffer[i]) {
             iguales = false;
-            if(a.buffer[i] < temp.buffer[i]) {
+            if(a.buffer[i] < t.buffer[i]) {
                 a_menor = true;
             }
             break;
@@ -891,23 +880,23 @@ bool operator<=(const decimal &a, const decimal &b)
     return a.is_negative() ? !a_menor : a_menor;
 }
 
-decimal abs(const decimal &v)
+decimal decimal::abs() const
 {
-    decimal t(v);
+    decimal t(*this);
 
     t.set_positive();
 
     return t;
 }
 
-decimal max(const decimal &v)
+decimal decimal::max() const
 {
     // Ojo, varias posibilidades:
     //  1. Solo decimales.
     //  2. Solo enteros.
     //  3. Decimales y enteros.
 
-    decimal t(v);
+    decimal t(*this);
 
     uint8_t max_val_inicio  = ((t.ents % 2) != 0) ? 9 : 99;
     uint8_t max_val_final   = ((t.decs % 2) != 0) ? 90 : 99;
@@ -925,12 +914,12 @@ decimal max(const decimal &v)
     return t;
 }
 
-decimal min(const decimal &v)
+decimal decimal::min() const
 {
-    // Poner todo a cero y el ultimo byte a los que
+    // Poner todo a cero y el ultimo byte a lo que
     // corresponda según las cifras que tengamos y si
     // hay decimales o no.
-    decimal t(v);
+    decimal t(*this);
 
     for(int i = 0; i < static_cast<int>(t.long_buffer); ++i)
         t.buffer[i] = 0;
@@ -943,9 +932,9 @@ decimal min(const decimal &v)
     return t;
 }
 
-decimal zero(const decimal &v)
+decimal decimal::zero() const
 {
-    decimal t(v);
+    decimal t(*this);
 
     std::memset(t.buffer, 0x00, sizeof(uint8_t[t.long_buffer]));
 

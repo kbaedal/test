@@ -508,22 +508,20 @@
 	"utiles.h"
 	"cliente.h"
 
-1460027606 source:c:\develop\projects\test\decimal.cpp
-	<exception>
+1460195493 source:c:\develop\projects\test\decimal.cpp
+	<string>
 	<cstring>
-	<sstream>
-	<bitset>
+	<stdexcept>
 	"decimal.h"
-	"cosas.h"
 	"utiles.h"
 
-1460029164 c:\develop\projects\test\decimal.h
+1460202434 c:\develop\projects\test\decimal.h
 	<cstdint>
 	<string>
 	<iostream>
 	"utiles.h"
 
-1460027936 source:c:\develop\projects\test\main.cpp
+1460202501 source:c:\develop\projects\test\main.cpp
 	<iostream>
 	<string>
 	<mysql.h>
