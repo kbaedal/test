@@ -5,8 +5,6 @@
 #include <string>
 #include <iostream>
 
-#include "utiles.h"
-
 // El plan es tener un tipo de dato decimal, similar al que se
 // utiliza en algunas bases de datos para almacenar numeros
 // con decimales de forma precisa, sin los problemas de
@@ -138,7 +136,12 @@ class decimal {
 
         // Operadores - Comparacion.
         friend bool operator==(const decimal &a, const decimal &b);
+        friend bool operator==(const decimal &a, const std::string &b);
         friend bool operator!=(const decimal &a, const decimal &b)
+        {
+            return !(a == b);
+        }
+        friend bool operator!=(const decimal &a, const std::string &b)
         {
             return !(a == b);
         }
@@ -168,7 +171,10 @@ class decimal {
         void resize(unsigned int _c, unsigned int _d);
 
         // Devuelve el decimal como cadena de caracteres.
-        std::string to_str() const;
+        // Por defecto le dara un formato para mostrar por pantalla,
+        // eliminado 0 por la izquerda y acomodando decimales y signo.
+        // Para obtener la representacion interna format = false.
+        std::string to_str(bool format = true) const;
 
         // Devuelve un decimal con el valor absoluto de v.
         decimal abs() const;
@@ -192,7 +198,13 @@ class decimal {
 
         unsigned int long_buffer;   // Tamaño total del buffer: long_ents + long_decs
 
-        void convertir(const std::string &str);
+        bool validar_cadena(const std::string &str); // ¿Contiene un número válido?
+        void convertir(const std::string &str); // Convierte el número a formato interno.
+
+        std::string int_to_s(const int &n, int width = 0) const;
+
+        int s_to_int(const std::string &s) const;
+
         bool is_negative() const
         {
             // El bit más significativo del primer byte del array nos indicará

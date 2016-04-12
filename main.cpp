@@ -1,9 +1,8 @@
 #include <iostream>
 #include <string>
 
-#include <mysql.h>
+//#include <mysql.h>
 
-#include "cosas.h"
 #include "decimal.h"
 
 int main()
@@ -40,14 +39,14 @@ int main()
 
     mysql_close(my_con);
     */
-    fpt::decimal a(13, 5);
-    fpt::decimal b(13, 5);
+    fpt::decimal a(12, 6);
+    fpt::decimal b(12, 6);
 
-    a = "-100.0";
-    b = "-21.000";
+    a = "100.0";
+    b = "6800.0";
 
-    std::cout << a.to_str() << " + " << b.to_str() << " = " << (a+b).to_str() << "\n";
-    std::cout << a.to_str() << " - " << b.to_str() << " = " << (a-b).to_str() << "\n";
+    std::cout << a.to_str() << " + " << b.to_str() << "% = " << (a+((a*b)/"100")).to_str() << "\n";
+    std::cout << a.to_str() << " - " << b.to_str() << " = " << (a-b).to_str(false) << "\n";
     std::cout << a.to_str() << " * " << b.to_str() << " = " << (a*b).to_str() << "\n";
     std::cout << a.to_str() << " / " << b.to_str() << " = " << (a/b).to_str() << "\n";
 

@@ -508,24 +508,24 @@
 	"utiles.h"
 	"cliente.h"
 
-1460195493 source:c:\develop\projects\test\decimal.cpp
-	<string>
+1460480373 source:c:\develop\projects\test\decimal.cpp
+	<algorithm>
+	<cstdlib>
 	<cstring>
+	<iomanip>
+	<sstream>
 	<stdexcept>
+	<string>
 	"decimal.h"
-	"utiles.h"
 
-1460202434 c:\develop\projects\test\decimal.h
+1460476578 c:\develop\projects\test\decimal.h
 	<cstdint>
 	<string>
 	<iostream>
-	"utiles.h"
 
-1460202501 source:c:\develop\projects\test\main.cpp
+1460480272 source:c:\develop\projects\test\main.cpp
 	<iostream>
 	<string>
-	<mysql.h>
-	"cosas.h"
 	"decimal.h"
 
 1459941298 source:c:\develop\projects\test\utiles.cpp
