@@ -39,11 +39,12 @@ int main()
 
     mysql_close(my_con);
     */
-    fpt::decimal a(12, 6);
-    fpt::decimal b(12, 6);
+    fpt::decimal a(12, 4);
+    fpt::decimal b(12, 4);
 
-    a = "100.0";
-    b = "6800.0";
+    a = "100";
+    /*
+    b = "68";
 
     std::cout << a.to_str() << " + " << b.to_str() << "% = " << (a+((a*b)/"100")).to_str() << "\n";
     std::cout << a.to_str() << " - " << b.to_str() << " = " << (a-b).to_str(false) << "\n";
@@ -55,6 +56,7 @@ int main()
     std::cout << "abs(a) :  " << a.abs().to_str() << "\n";
     std::cout << "zero(a) : " << a.zero().to_str() << "\n";
     std::cout << "-a:       " << (-a).to_str() << "\n";
+    */
 
     return 0;
 }

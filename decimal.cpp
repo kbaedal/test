@@ -12,6 +12,8 @@ namespace fpt {
 
 decimal::decimal(unsigned int _c, unsigned int _d) : ents(_c - _d), decs(_d)
 {
+    std::cerr << "Constructor(uint, uint) IN ";
+
     // Reservamos 8 bits por cada dos cifras.
     long_ents   = ents != 0 ? static_cast<int>((ents - 1)/2) + 1 : 0;
     long_decs   = decs != 0 ? static_cast<int>((decs - 1)/2) + 1 : 0;
@@ -20,10 +22,14 @@ decimal::decimal(unsigned int _c, unsigned int _d) : ents(_c - _d), decs(_d)
     buffer      = new uint8_t[long_buffer];
 
     std::memset(buffer, 0x00, sizeof(uint8_t[long_buffer]));
+
+    std::cerr << "Constructor(uint, uint) OUT\n";
 }
 
 decimal::decimal(const decimal &d)
 {
+    std::cerr << "Constructor(decimal) IN ";
+
     ents        = d.ents;
     decs        = d.decs;
 
@@ -36,15 +42,23 @@ decimal::decimal(const decimal &d)
 
     std::memset(buffer, 0x00, sizeof(uint8_t[long_buffer]));
     std::memcpy(buffer, d.buffer, sizeof(uint8_t[long_buffer]));
+
+    std::cerr << "Constructor(decimal) OUT\n";
 }
 
 decimal::~decimal()
 {
+    std::cerr << "Destructor IN ";
+
     delete [] buffer;
+
+    std::cerr << "Destructor OUT\n";
 }
 
 decimal &decimal::operator=(const decimal &d)
 {
+    std::cerr << "Operator=(decimal) IN ";
+
     if(this != &d) {
         decimal t(d);
         t.resize(ents + decs, decs);
@@ -52,38 +66,42 @@ decimal &decimal::operator=(const decimal &d)
         std::memcpy(buffer, t.buffer, sizeof(uint8_t[long_buffer]));
     }
 
+    std::cerr << "Operator=(decimal) OUT\n";
+
     return *this;
 }
 
 decimal &decimal::operator=(const std::string &val)
 {
+    std::cerr << "Operator=(string) IN ";
+
     // Calculamos la posicion del punto, y desde ahí vemos la parte
     // que corresponde a la entera y a la decimal.
     // Así ya podemos calcular si el número pasado "encaja" en la
     // definicion de este decimal. Si cabe, lo procesamos y convertimos
     // al formato interno. Si no, lanzamos excepción.
-    unsigned int    c, d, e;
-    std::string     temp = val;
+    unsigned int    tc, td, te;
+    std::string     tv = val;
 
     size_t  pos_punto;
 
-    if(validar_cadena(temp)) {
+    if(validar_cadena(tv)) {
         // Comprobamos si es negativo.
-        if(temp[0] == '-') {
+        if(tv[0] == '-') {
             this->set_negative();
-            temp.erase(0, 1);
+            tv.erase(0, 1);
         }
         // Calculamos numero de cifras, parte entera y parte decimal.
-        if((pos_punto = temp.find_first_of('.')) != std::string::npos) {
-            c = temp.size() - 1;
-            d = c - pos_punto;
-            e = c - d;
+        if((pos_punto = tv.find_first_of('.')) != std::string::npos) {
+            tc = tv.size() - 1;
+            td = tc - pos_punto;
+            te = tc - td;
         }
         else {
             // El numero pasado no contiene decimales.
-            c = temp.size();
-            d = 0;
-            e = c;
+            tc = tv.size();
+            td = 0;
+            te = tc;
         }
 
         // Comprobamos que el numero pasado "encaja" en este decimal.
@@ -91,31 +109,34 @@ decimal &decimal::operator=(const std::string &val)
         // que comprobar que las cifras que sobran son 0. Si alguna de esas
         // cifras es distinta de 0, no podremos almacenarla y por lo tanto
         // devolvemos error.
-        if(e > ents) {
+        if(te > ents) {
             int i = 0;
-            while(e > ents) {
-                if(static_cast<char>(temp[i]) != '0')
+            while(te > ents) {
+                if(static_cast<char>(tv[i]) != '0')
                     throw std::out_of_range("El numero pasado no encaja en este decimal.");
 
                 // Avanzamos por la cadena.
                 ++i;
                 // Una cifra menos por comprobar.
-                --e;
+                --te;
             }
         }
 
         // Procesamos la cadena y la convertimos al formato interno.
-        convertir(temp);
+        convertir(tv);
     }
     else {
         throw std::invalid_argument("La cadena no contiene un numero valido.");
     }
+
+    std::cerr << "Operator=(string) OUT\n";
 
     return *this;
 }
 
 decimal &decimal::operator+=(const decimal &d)
 {
+    std::cerr << "Operator+=(decimal) IN ";
     /*
      *  Suma:
      *
@@ -185,12 +206,16 @@ decimal &decimal::operator+=(const decimal &d)
     if((buffer[0] & 0x7F) > max_val_e)
         throw std::out_of_range("La suma ha producido desbordamiento.");
 
+    std::cerr << "Operator+=(decimal) OUT\n";
+
     return *this;
 }
 
 
 decimal &decimal::operator-=(const decimal &d)
 {
+    std::cerr << "Operator-=(decimal) IN ";
+
     /*
      *  Resta:
      *
@@ -260,11 +285,14 @@ decimal &decimal::operator-=(const decimal &d)
     if((buffer[0] & 0x7F) > max_val_e)
         throw std::out_of_range("La resta ha producido desbordamiento.");
 
+    std::cerr << "Operator-=(decimal) OUT\n";
+
     return *this;
 }
 
 void decimal::suma(const uint8_t *sum)
 {
+    std::cerr << "suma(uint8_t*) IN ";
     // Por cada pareja de numeros (posicion del buffer), empezando por el final:
     //  1. Sumamos ambos numeros.
     //  2. Si las suma pasa de 100 acarreamos para el siguiente par y restamos 100 a este par.
@@ -288,10 +316,12 @@ void decimal::suma(const uint8_t *sum)
 
         buffer[i] = op3;
     }
+    std::cerr << "suma(uint8_t*) OUT\n";
 }
 
 void decimal::resta(const uint8_t *res)
 {
+    std::cerr << "resta(uint8_t*) IN ";
     // Por cada pareja de numeros (posicion del buffer), empezando por el final:
     //  1. Comprobamos si operador 1 es mayor o igual operador 2.
     //  2. Si lo es, restamos. Si no, añadimos 100, indicando acarreo para el siguiente, y restamos.
@@ -316,10 +346,12 @@ void decimal::resta(const uint8_t *res)
 
         buffer[i] = op3;
     }
+    std::cerr << "resta(uint8_t*) OUT\n";
 }
 
 decimal &decimal::operator*=(const decimal &d)
 {
+    std::cerr << "operator*=(decimal) IN ";
     // Declaramos un temporal que tendrá siempre un numero
     // par de cifras, y que será como minimo igual de grande
     // que el decimal original. Así garantizamos que las
@@ -385,11 +417,14 @@ decimal &decimal::operator*=(const decimal &d)
 
     delete [] res_mult;
 
+    std::cerr << "operator*=(decimal) OUT\n";
+
     return *this;
 }
 
 decimal decimal::inverse() const
 {
+    std::cerr << "inverse() IN ";
     // Método Newton-Raphson:
     //  - Obtener una estimacion x(0) de 1/decimal, para lo que calculamos
     //    estimaciones cada vez más precisas de x(1), x(2), ..., x(s).
@@ -445,10 +480,10 @@ decimal decimal::inverse() const
                             // las consideramos insignificantes, aumentar decimales
                             // no va a producir un resultado mejor.
 
-    decimal p(tc, td),
-            x(tc, td),
-            r(tc, td),
-            c(tc, td);
+    decimal p(tc, td),  // Precision deseada.
+            x(tc, td),  // Resultado.
+            r(tc, td),  // Variable para controlar el resultado.
+            c(tc, td);  // Almacenamos el contenido actual del decimal.
 
     // Le damos a p el menor valor posible.
     p = p.min();
@@ -461,11 +496,10 @@ decimal decimal::inverse() const
 
     c = *this;
 
-    // Aplicamos Newton-Raphson
+    // Aplicamos Newton-Raphson, y repetimos hasta 2 veces para mejorar la precision.
     while(--i) {
-        std::cout << "(x, c, x * r): " << x.to_str() << " " << c.to_str() << " " << (x * c).to_str() << "\n";
-        while((x * c) > ("1" + p) || (x * c) < ("1" - p)) {
-            r = x * ("2" - c * x);
+        while((x * c) > ("1.0" + p) || (x * c) < ("1.0" - p)) {
+            r = x * ("2.0" - c * x);
 
             // Comprobamos si hemos alcanzado el valor más próximo posible
             // a la solución correcta. Para obtener un resultado más preciso
@@ -494,11 +528,14 @@ decimal decimal::inverse() const
         }
     }
 
+    std::cerr << "inverse() OUT\n";
+
     return r;
 }
 
 decimal &decimal::operator/=(const decimal &d)
 {
+    std::cerr << "operator/=(decimal) IN ";
     // Utilizaremos un decimal con un numero par de cifras y
     // el doble de tamaño del original para asegurar la precisión
     // del cáculo.
@@ -530,10 +567,13 @@ decimal &decimal::operator/=(const decimal &d)
 
         return *this;
     }
+
+    std::cerr << "operator/=(decimal) OUT\n";
 }
 
 void decimal::resize(unsigned int nc, unsigned int nd)
 {
+    std::cerr << "resize(int, int) IN ";
     // Proceso:
     //  1. Comprobar el numero de enteros. Si es mayor que el
     //      que tenemos, no hay problema. En caso contrario,
@@ -547,8 +587,9 @@ void decimal::resize(unsigned int nc, unsigned int nd)
             throw std::invalid_argument("Numero de decimales incompatible con numero de cifras.");
 
         unsigned int    ne = nc - nd;
-        unsigned int    le = static_cast<int>((ne - 1)/2) + 1;
-        unsigned int    ld = static_cast<int>((nd - 1)/2) + 1;
+
+        unsigned int    le = ne != 0 ? static_cast<int>((ne - 1)/2) + 1 : 0;
+        unsigned int    ld = nd != 0 ? static_cast<int>((nd - 1)/2) + 1 : 0;
         unsigned int    lb = le + ld;
         uint8_t         *t = new uint8_t[lb];
 
@@ -601,9 +642,9 @@ void decimal::resize(unsigned int nc, unsigned int nd)
             //  1. Calcular la diferencia de bytes.
             //  2. Eliminar el último byte, y redondear todo el decimal.
             //  3. Repetir para todos los bytes a eliminar.
-            unsigned int    dif         = long_decs - ld;
+            unsigned int dif = long_decs - ld;
 
-            bool            acarreo     = false;
+            bool acarreo = false;
 
             // Procesamos los bytes a eliminar, para ver si una vez eliminados
             // tenemos que acarrear al último byte del nuevo tamaño.
@@ -685,10 +726,13 @@ void decimal::resize(unsigned int nc, unsigned int nd)
         if(signo)
             this->set_negative();
     }
+
+    std::cerr << "resize(int, int) OUT\n";
 }
 
 void decimal::convertir(const std::string &str)
 {
+    std::cerr << "convertir(string) IN ";
     // Trabajamos sobre una copia, y comparamos
     // con la representacion de nuestro decimal.
     std::string temp = str,
@@ -703,15 +747,17 @@ void decimal::convertir(const std::string &str)
 
     // Equiparamos los tamaños de las partes entera y decimal.
     if(pos_punto_t != std::string::npos) {
-        if(pos_punto_t > pos_punto_o)
-            // La cadena pasada tiene más cifras en la parte entera de las que podemos
-            // almacenar. Eliminamos tantas como sea necesario, ya que sabemos que
-            // son solamente 0's, lo hemos comprobado antes.
-            temp.erase(0, pos_punto_t - pos_punto_o);
-        else
-            // La cadena pasada tiene menos cifras en la parte entera, con lo que
-            // rellenamos con 0.
-            temp.insert(0, pos_punto_o - pos_punto_t, '0');
+        if(pos_punto_o != std::string::npos) {
+            if(pos_punto_t > pos_punto_o)
+                // La cadena pasada tiene más cifras en la parte entera de las que podemos
+                // almacenar. Eliminamos tantas como sea necesario, ya que sabemos que
+                // son solamente 0's, lo hemos comprobado antes.
+                temp.erase(0, pos_punto_t - pos_punto_o);
+            else
+                // La cadena pasada tiene menos cifras en la parte entera, con lo que
+                // rellenamos con 0.
+                temp.insert(0, pos_punto_o - pos_punto_t, '0');
+        }
     }
     else {
         while(temp.size() < ents)
@@ -735,7 +781,7 @@ void decimal::convertir(const std::string &str)
         int         numero;
         bool        acarreo = false;
 
-        while(temp.size() > orig.size()) {
+        while(temp.size() > orig.size() && temp[temp.size() - 1] != '.')  {
             cifra   = temp[temp.size() - 1];
             numero  = s_to_int(cifra);
 
@@ -748,6 +794,12 @@ void decimal::convertir(const std::string &str)
                 acarreo = false;
 
             // Eliminamos esta cifra de la cadena.
+            temp.pop_back();
+        }
+
+        if(temp[temp.size() - 1] == '.') {
+            // Nuestro decimal solo tiene parte entera, y ya hemos eliminado toda
+            // la parte decimal del nuevo numero. Eliminamos el punto y seguimos.
             temp.pop_back();
         }
 
@@ -773,23 +825,27 @@ void decimal::convertir(const std::string &str)
             else {
                 acarreo = false;
             }
+            std::cerr << "Convertir() IN\n";
 
             temp[i] = int_to_s(numero)[0];
+
+            std::cerr << "Convertir() OUT\n";
 
             --i;
         }
     }
 
     // Si la parte entera tiene un numero de cifras impar, añadimos un 0 por delante.
-    if((ents % 2) != 0)
+    if((ents % 2) != 0 && ents != 0)
         temp.insert(0, 1, '0');
 
     // Lo mismo para la parte decimal, pero añadiendo al final.
-    if((decs % 2) != 0)
+    if((decs % 2) != 0 && decs != 0)
         temp += '0';
 
-    // Buscamos el punto y lo eliminamos.
-    temp.erase(temp.find_first_of('.'), 1);
+    // Buscamos el punto, si existe, y lo eliminamos.
+    if((pos_punto_t = temp.find_first_of('.')) != std::string::npos)
+        temp.erase(pos_punto_t, 1);
 
     // Convertimos los valores de la cadena a nuestro formato interno.
     // Habrá que tener cuidado con el primer byte, pues almacena también
@@ -804,10 +860,14 @@ void decimal::convertir(const std::string &str)
             buffer[i] = static_cast<uint8_t>(s_to_int(temp.substr(j, 2)));
         }
     }
+
+    std::cerr << "convertir(string) OUT\n";
 }
 
 bool decimal::validar_cadena(const std::string &str)
 {
+    std::cerr << "validar_cadena(string) IN ";
+
     std::string t   = str;
     const char  *ws = " \t\n\r\f\v";
 
@@ -828,6 +888,9 @@ bool decimal::validar_cadena(const std::string &str)
     // Averiguamos la posición del signo más, si lo hay.
     size_t pos_plus = t.find_first_of('+');
 
+
+    std::cerr << "validar_cadena(string) OUT\n";
+
     // Si todos son caracteres válidos, hay como máximo un punto, y si
     // hay un menos o un mas al principio, tenemos un numero válido.
     return (valid_chars == std::string::npos) && (num_points <= 1) && (
@@ -839,7 +902,10 @@ bool decimal::validar_cadena(const std::string &str)
 
 std::string decimal::to_str(bool format) const
 {
+    std::cerr << "to_str(bool) IN ";
+
     std::string t;
+
 
     for(int i = 0; i < static_cast<int>(long_buffer); ++i) {
         uint8_t x = buffer[i];
@@ -854,6 +920,10 @@ std::string decimal::to_str(bool format) const
         // Si el numero de enteros es impar, del primer par de numeros
         // tomaremos solamente una cifra.
         // Lo mismo para los decimales, pero con el ultimo par.
+        // Hay que controlar si tenemos enteros solamente, si tenemos
+        // tanto enteros como decimales, o si solamente tenemos
+        // decimales.
+
         if((i == 0) && ((ents % 2) != 0))
             t += int_to_s(static_cast<int>(x), 2).substr(1, 1);
         else if((i == static_cast<int>(long_buffer - 1)) && ((decs % 2) != 0))
@@ -863,27 +933,54 @@ std::string decimal::to_str(bool format) const
     }
 
 
+    // Para imprimir:
+    //  1. Imprimir todo el buffer por pares en una cadena temporal.
+    //  2. Comprobar si tenemos enteros y decimales o no.
+    //      a. ENTEROS Y DECIMALES: Buscar la posicion del punto, y colocar.
+    //      b. SOLO DECIMALES: Colocar el punto al principio.
+    //      c. SOLO ENTEROS: No colocar el punto.
+    //  3. Eliminar, si sobran, la cifra inicial y/o la final.
+    //  4. Colocar el signo.
+
+    /*
+    for(int i = 0; i < static_cast<int>(long_buffer); ++i) {
+        uint8_t x = buffer[i] & 0x7F;
+
+        t += int_to_s(static_cast<int>(x), 2);
+    }
+    */
+
     if(format) {
         // Formateamos el número para que sea legible. Es decir,
-        // eliminamos los ceros a la izquierda, dejamos todos
-        // los ceros decimales y si no tenemos ninguna cifra entera,
-        // ponemos un 0.
+
+        // Eliminamos los ceros a la izquierda, dejandos los decimales.
         t.erase(0, t.find_first_not_of("0"));
 
-        if(t[0] == '.')
-            t.insert(0, 1, '0');
+        // Si no tenemos enteros, ponemos un 0 al principio.
+        if(t.size() != 0) {
+            if(t[0] == '.')
+                t.insert(0, 1, '0');
+        }
+        else {
+            // Si no tenemos ningún número, ponemos un 0.
+            // Este caso se puede dar al formatear un decimal que tenga
+            // solamente parte entera y esté a 0.
+            t += "0";
+        }
     }
-
 
     if(this->is_negative())
         // Si es necesario, insertamos el signo.
         t.insert(0, 1, '-');
+
+    std::cerr << "to_str(bool) OUT\n";
 
     return t;
 }
 
 bool operator==(const decimal &a, const decimal &b)
 {
+    std::cerr << "operator==(decimal, decimal) IN ";
     // 1. Comparamos signos. Si son diferentes devolvemos falso.
     // 2. Cambiamos el tamaño de b para que coincida con el de a.
     // 3. Comparamos byte a byte.
@@ -897,20 +994,27 @@ bool operator==(const decimal &a, const decimal &b)
         if(a.buffer[i] != t.buffer[i])
             return false;
 
+    std::cerr << "operator==(decimal, decimal) OUT\n";
+
     return true;
 }
 
 bool operator==(const decimal &a, const std::string &b)
 {
+    std::cerr << "operator==(dec, string) IN ";
+
     decimal t(a.ents + a.decs, a.decs);
 
     t = b;
+
+    std::cerr << "operator==(dec, string) OUT\n";
 
     return a == t;
 }
 
 bool operator>=(const decimal &a, const decimal &b)
 {
+    std::cerr << "operator>=(decimal, decimal) IN ";
     // 1. Comparamos signos. Si son distintos, el positivo es el mayor.
     // 2. Cambiamos el tamaño de b para que coincida con el de a.
     // 3. Comparamos byte a byte, y devolvemos en consecuencia.
@@ -937,12 +1041,14 @@ bool operator>=(const decimal &a, const decimal &b)
     if(iguales)
         return true;
 
+    std::cerr << "operator>=(decimal, decimal) OUT ";
     // Invertimos el resultado si a y b son negativos.
     return a.is_negative() ? !a_mayor : a_mayor;
 }
 
 bool operator<=(const decimal &a, const decimal &b)
 {
+    std::cerr << "operator<=(decimal, decimal) IN\n";
     // 1. Comparamos signos. Si son distintos, el negativo es el menor.
     // 2. Cambiamos el tamaño de b para que coincida con el de a.
     // 3. Comparamos byte a byte, y devolvemos en consecuencia.
@@ -968,6 +1074,8 @@ bool operator<=(const decimal &a, const decimal &b)
 
     if(iguales)
         return true;
+
+    std::cerr << "operator<=(decimal, decimal) OUT\n";
 
     // Invertimos el resultado si a y b son negativos.
     return a.is_negative() ? !a_menor : a_menor;
@@ -1036,6 +1144,8 @@ decimal decimal::zero() const
 
 std::string decimal::int_to_s(const int &n, int width) const
 {
+    std::cerr << "int_to_s(int, int) IN ";
+
     std::stringstream ss;
 
     if(width > 0)
@@ -1043,16 +1153,22 @@ std::string decimal::int_to_s(const int &n, int width) const
     else
         ss << n;
 
+    std::cerr << "int_to_s(int, int) OUT\n";
+
     return ss.str();
 }
 
 int decimal::s_to_int(const std::string &s) const
 {
+    std::cerr << "s_to_int(string) IN ";
+
     int res;
 
     std::stringstream is(s);
 
     is >> res;
+
+    std::cerr << "s_to_int(string) OUT\n";
 
     return res;
 }
