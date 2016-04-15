@@ -39,18 +39,18 @@ int main()
 
     mysql_close(my_con);
     */
-    fpt::decimal a(12, 4);
-    fpt::decimal b(12, 4);
+    fpt::decimal a(12, 0);
+    fpt::decimal b(12, 0);
 
-    a = "100";
-    /*
-    b = "68";
+    a = "321";
+    b = "123";
 
-    std::cout << a.to_str() << " + " << b.to_str() << "% = " << (a+((a*b)/"100")).to_str() << "\n";
-    std::cout << a.to_str() << " - " << b.to_str() << " = " << (a-b).to_str(false) << "\n";
-    std::cout << a.to_str() << " * " << b.to_str() << " = " << (a*b).to_str() << "\n";
+//    std::cout << a.to_str() << " + " << b.to_str() << " = " << (a+b).to_str() << "\n";
+//    std::cout << a.to_str() << " - " << b.to_str() << " = " << (a-b).to_str(false) << "\n";
+//    std::cout << a.to_str() << " * " << b.to_str() << " = " << (a*b).to_str() << "\n";
     std::cout << a.to_str() << " / " << b.to_str() << " = " << (a/b).to_str() << "\n";
 
+    /*
     std::cout << "max(a) :  " << a.max().to_str() << "\n";
     std::cout << "min(a) :  " << a.min().to_str() << "\n";
     std::cout << "abs(a) :  " << a.abs().to_str() << "\n";

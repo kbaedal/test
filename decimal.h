@@ -198,7 +198,10 @@ class decimal {
 
         unsigned int long_buffer;   // Tamaño total del buffer: long_ents + long_decs
 
-        bool validar_cadena(const std::string &str); // ¿Contiene un número válido?
+        // Comprueba que str contenga un numero válido, ignorando espacios y otros
+        // caracteres especiales tanto al principio como al final. Devuelve la
+        // cadena sin estos caracteres en t.
+        bool validar_cadena(const std::string &str, std::string &t);
         void convertir(const std::string &str); // Convierte el número a formato interno.
 
         std::string int_to_s(const int &n, int width = 0) const;
