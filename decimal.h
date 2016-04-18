@@ -240,6 +240,245 @@ class decimal {
         decimal inverse() const;
 };
 
+class bcddec {
+    // Nuevo experimento. Esta vez codificando las cifras en bcd,
+    // y almacenando el número en orden lógico, es decir, la ultima
+    // cifra (la menos significativa) queda almacenada en el la
+    // primera posición del buffer.
+    //
+    // Es probable que este orden facilite las cosas, pero ya veremos.
+
+    public:
+        // Constructores
+        bcddec(unsigned int _c, unsigned int _d);
+        bcddec(const bcddec &bcd);
+
+        // Destructor
+        ~bcddec();
+
+        // Operadores - Asignación.
+        bcddec &operator=(const bcddec &d);
+        bcddec &operator=(const std::string &val);
+
+        // Operadors - Negación
+        bcddec operator-()
+        {
+            bcddec t(*this);
+
+            if(t.is_negative())
+                t.set_positive();
+            else
+                t.set_negative();
+
+            return t;
+        }
+
+        // Operadores - Suma y Resta.
+        bcddec &operator+=(const bcddec &d);
+        friend bcddec operator+(bcddec a, const bcddec &b)
+        {
+            a += b;
+            return a;
+        }
+        friend bcddec operator+(bcddec a, const std::string &val)
+        {
+            bcddec t(a.ents + a.decs, a.decs);
+            t = val;
+            a += t;
+
+            return a;
+        }
+        friend bcddec operator+(const std::string &val, bcddec a)
+        {
+            return a + val;
+        }
+
+        bcddec &operator-=(const bcddec &d);
+        friend bcddec operator-(bcddec a, const bcddec &b)
+        {
+            a -= b;
+            return a;
+        }
+        friend bcddec operator-(bcddec a, const std::string &val)
+        {
+            bcddec t(a.ents + a.decs, a.decs);
+            t = val;
+            a -= t;
+
+            return a;
+        }
+        friend bcddec operator-(const std::string &val, bcddec a)
+        {
+            bcddec t(a.ents + a.decs, a.decs);
+            t = val;
+            t -= a;
+
+            return t;
+        }
+
+        // Operadores - Multiplicación y división.
+        bcddec &operator*=(const bcddec &d);
+        friend bcddec operator*(bcddec a, const bcddec &b)
+        {
+            a *= b;
+            return a;
+        }
+        friend bcddec operator*(bcddec a, const std::string &val)
+        {
+            bcddec t(a.ents + a.decs, a.decs);
+            t = val;
+            a *= t;
+
+            return a;
+        }
+        friend bcddec operator*(const std::string &val, bcddec a)
+        {
+            bcddec t(a.ents + a.decs, a.decs);
+            t = val;
+            t *= a;
+
+            return t;
+        }
+
+        bcddec &operator/=(const bcddec &d);
+        friend bcddec operator/(bcddec a, const bcddec &b)
+        {
+            a /= b;
+            return a;
+        }
+        friend bcddec operator/(bcddec a, const std::string &val)
+        {
+            bcddec t(a.ents + a.decs, a.decs);
+            t = val;
+            a /= t;
+
+            return a;
+        }
+        friend bcddec operator/(const std::string &val, bcddec a)
+        {
+            bcddec t(a.ents + a.decs, a.decs);
+            t = val;
+            t /= a;
+
+            return t;
+        }
+
+        // Operadores - Comparacion.
+        friend bool operator==(const bcddec &a, const bcddec &b);
+        friend bool operator==(const bcddec &a, const std::string &b);
+        friend bool operator!=(const bcddec &a, const bcddec &b)
+        {
+            return !(a == b);
+        }
+        friend bool operator!=(const bcddec &a, const std::string &b)
+        {
+            return !(a == b);
+        }
+
+        friend bool operator>=(const bcddec &a, const bcddec &b);
+        friend bool operator<=(const bcddec &a, const bcddec &b);
+
+        friend bool operator>(const bcddec &a, const bcddec &b)
+        {
+            return !(a <= b);
+        }
+
+        friend bool operator<(const bcddec &a, const bcddec &b)
+        {
+            return !(a >= b);
+        }
+
+        friend std::ostream &operator << (std::ostream &os, const bcddec &d)
+        {
+            os << d.to_str();
+
+            return os;
+        }
+
+        // Cambia el tamaño del bcddec, redondeando si es necesario
+        // o lanzando excepción si se produce desbordamiento.
+        void resize(unsigned int _c, unsigned int _d);
+
+        // Devuelve el bcddec como cadena de caracteres.
+        // Por defecto le dara un formato para mostrar por pantalla,
+        // eliminado 0 por la izquerda y acomodando bcddeces y signo.
+        // Para obtener la representacion interna format = false.
+        std::string to_str(bool format = true) const;
+
+        // Devuelve un bcddec con el valor absoluto de v.
+        bcddec abs() const;
+
+        // Devuelve un bcddec con el valor maximo que puede tener v.
+        bcddec max() const;
+
+        // Devuelve un bcddec con el valor minimo que puede tener v.
+        bcddec min() const;
+
+        // Devuelve un bcddec de iguales caracteristicas que v, pero con valor 0.
+        bcddec zero() const;
+
+    private:
+        uint8_t *buffer;
+
+        unsigned int ents;          // Total enteros del número.
+        unsigned int long_ents;     // Tamaño del array para los enteros: ((ents - 1)/2) + 1
+        unsigned int decs;          // Total bcddeces del número.
+        unsigned int long_decs;     // Tamaño del array para los bcddeces: ((decs - 1)/2) + 1
+
+        unsigned int long_buffer;   // Tamaño total del buffer: long_ents + long_decs
+
+        // Comprueba que str contenga un numero válido, ignorando espacios y otros
+        // caracteres especiales tanto al principio como al final. Devuelve la
+        // cadena sin estos caracteres en t.
+        bool validar_cadena(const std::string &str, std::string &t);
+        void convertir(const std::string &str); // Convierte el número a formato interno.
+
+        std::string int_to_s(const int &n, int width = 0) const;
+
+        int s_to_int(const std::string &s) const;
+
+        bool is_negative() const
+        {
+            // El bit más significativo del primer byte del array nos indicará
+            // si el bcddec es negatvo o positivo.
+            return ((buffer[0] & 0x80) == 0x80);
+        }
+
+        void set_negative()
+        {
+            buffer[0] |= 0x80;
+        }
+
+        void set_positive()
+        {
+            buffer[0] &= 0x7F;
+        }
+
+        // Suma al bcddec los datos de sum. Condiciones:
+        //  1. sizeof(sum) == sizeof(buffer)
+        //  2. Ambos datos deben ser positivos.
+        void suma(const uint8_t *sum);
+
+        // Resta del bcddec los datos de res. Condiciones:
+        //  1. sizeof(res) == sizeof(buffer)
+        //  2. Ambos datos deben ser positivos.
+        //  3. La resta debe dar un resultado positivo.
+        void resta(const uint8_t *res);
+
+        // Obtiene el inverso multiplicativo, tal que i*d = 1.
+        bcddec inverse() const;
+
+        // Devuelve un digito codificado en BCD, en el nybble alto
+        // si high = true, en el bajo de lo contrario.
+        // En caso de que la cifra no se pueda convertir, devuelve 0xFF.
+        uint8_t char_to_bcd(char cifra, bool high);
+
+        // Devuelve un caracter que corresponde al dígito almacenado
+        // en bcd. Si high = true decodifica el nybble alto, el bajo
+        // en caso contrario.
+        char bcd_to_char(uint8_t cifra, bool high);
+};
+
 }; // Namespace fpt
 
 #endif // DECIMAL_H_INCLUDED

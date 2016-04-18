@@ -40,6 +40,7 @@
 			<Add library="C:/Develop/Libs/mysql/lib/libmysql.a" />
 			<Add directory="C:/Develop/Libs/mysql/lib" />
 		</Linker>
+		<Unit filename="bcddec.cpp" />
 		<Unit filename="cliente.cpp" />
 		<Unit filename="cliente.h" />
 		<Unit filename="cosas.cpp" />
