@@ -251,7 +251,7 @@ class bcddec {
     public:
         // Constructores
         bcddec(unsigned int _c, unsigned int _d);
-        bcddec(const bcddec &bcd);
+        bcddec(const bcddec &d);
 
         // Destructor
         ~bcddec();
@@ -421,11 +421,10 @@ class bcddec {
         uint8_t *buffer;
 
         unsigned int ents;          // Total enteros del número.
-        unsigned int long_ents;     // Tamaño del array para los enteros: ((ents - 1)/2) + 1
-        unsigned int decs;          // Total bcddeces del número.
-        unsigned int long_decs;     // Tamaño del array para los bcddeces: ((decs - 1)/2) + 1
+        unsigned int decs;          // Total racionales del número.
+        unsigned int cifs;          // Total cifras del número.
 
-        unsigned int long_buffer;   // Tamaño total del buffer: long_ents + long_decs
+        unsigned int long_buffer;   // Tamaño total del buffer: int(cifs/2) + 1.
 
         // Comprueba que str contenga un numero válido, ignorando espacios y otros
         // caracteres especiales tanto al principio como al final. Devuelve la
@@ -477,6 +476,13 @@ class bcddec {
         // en bcd. Si high = true decodifica el nybble alto, el bajo
         // en caso contrario.
         char bcd_to_char(uint8_t cifra, bool high);
+
+        // Devuelve el valor de la cifra en la posicion indicada. La primera
+        // posicion será la 0, y la última ents + decs - 1.
+        uint8_t get_cifra(unsigned int pos);
+
+        // Coloca el valor de la cifra en la posicion indicada.
+        void set_cifra(uint8_t val, unsigned int pos);
 };
 
 }; // Namespace fpt

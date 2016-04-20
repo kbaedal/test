@@ -10,12 +10,13 @@
 
 namespace fpt {
 
-bcddec::bcddec(unsigned int _c, unsigned int _d) : ents(_c - _d), decs(_d)
+bcddec::bcddec(unsigned int _c, unsigned int _d) : cifs(_c), ents(_c - _d), decs(_d)
 {
-    // Reservamos 8 bits por cada dos cifras.
-    long_ents   = ents != 0 ? static_cast<int>((ents - 1)/2) + 1 : 0;
-    long_decs   = decs != 0 ? static_cast<int>((decs - 1)/2) + 1 : 0;
-    long_buffer = long_ents + long_decs;
+    if(cifs < 1)
+        throw std::out_of_range("Numero de cifras incorrecto.");
+
+    // Necesitamos 4 bits por cifra, 1 byte por cada 2 cifras.
+    long_buffer = static_cast<int>((cifs/2) + 1);
 
     buffer      = new uint8_t[long_buffer];
 
@@ -23,17 +24,15 @@ bcddec::bcddec(unsigned int _c, unsigned int _d) : ents(_c - _d), decs(_d)
 
     // Si tenemos un numero de cifras impar, ponemos el nybble superior
     // del ultimo byte a F, indicando que ese espacio no es usable.
-    if(((ents + decs) % 2) != 0)
+    if(((cifs) % 2) != 0)
         buffer[long_buffer - 1] = 0xF0;
 }
 
 bcddec::bcddec(const bcddec &d)
 {
+    cifs        = d.cifs;
     ents        = d.ents;
     decs        = d.decs;
-
-    long_ents   = d.long_ents;
-    long_decs   = d.long_decs;
 
     long_buffer = d.long_buffer;
 
@@ -52,9 +51,12 @@ bcddec &bcddec::operator=(const bcddec &d)
 {
     if(this != &d) {
         bcddec t(d);
-        t.resize(ents + decs, decs);
+        t.resize(cifs, decs);
 
         std::memcpy(buffer, t.buffer, sizeof(uint8_t[long_buffer]));
+
+        if(t.is_negative())
+            this->set_negative();
     }
 
     return *this;
@@ -516,149 +518,84 @@ void bcddec::resize(unsigned int nc, unsigned int nd)
 
     // Comprobamos que realmente haya que cambiar el tamaño.
 
-    if((nc != ents + decs) || (nd != decs)) {
-        if((nc - nd) < 0)
-            throw std::invalid_argument("Numero de bcddeces incompatible con numero de cifras.");
+    if(nd > nc)
+        throw std::invalid_argument("Numero de decimales incompatible con numero de cifras.");
 
-        unsigned int    ne = nc - nd;
+    unsigned int ne = nc - nd;
 
-        unsigned int    le = ne != 0 ? static_cast<int>((ne - 1)/2) + 1 : 0;
-        unsigned int    ld = nd != 0 ? static_cast<int>((nd - 1)/2) + 1 : 0;
-        unsigned int    lb = le + ld;
-        uint8_t         *t = new uint8_t[lb];
+    if((nc != cifs) || (nd != decs)) {
+        bcddec t(nc, nd);  // Temporal para operaciones.
 
-        unsigned int    max_val_e   = ((ne % 2) != 0) ? 9 : 99;
-        unsigned int    max_val_d   = ((nd % 2) != 0) ? 94 : 99;
+        // Comprobamos que las cifras por encima de lo que podemos almacenar sean 0.
+        if(nc - nd < ents)
+            for(int i = decs + nc - nd - 1; i < decs + ents; ++i)
+                if(get_cifra(i) != 0)
+                    throw std::out_of_range("El cambio de tamanio ha provocado desbordamiento.");
 
-        // Almacenamos el signo, y hacemos el numero positivo, para
-        // las siguientes comprobaciones.
-        bool signo = this->is_negative();
-        this->set_positive();
+        // Llegados aquí, sabemos que el contenido cabe en el nuevo tamaño, así pues,
+        // después, tras comprobar los decimales y el posible acarreo, podremos copiar
+        // sin riesgo.
+        //for(int i = nd, j = decs; i < nc; ++i, ++j)
+        //    t.set_cifra(this->get_cifra(j), i);
 
-        std::memset(t, 0x00, sizeof(uint8_t[lb]));
-
-        // Empezaremos por los enteros, por si después con los bcddeces
-        // es necesario aplicar redondeo.
-        if(ne < ents) {
-            // Tenemos que reducir el numero de enteros, asi que debemos
-            // comprobar que no se produce desbordamiento.
-
-            // Recorremos el buffer original en sentido inverso, desde la
-            // primera posicion del nuevo tamaño, y comprobaremos que el
-            // valor se puede copiar, además de seguir comprobando que el
-            // resto de bytes están a 0.
-            int dif = long_ents - le;
-
-            if(buffer[dif] > max_val_e) {
-                delete [] t;
-                throw std::out_of_range("Cambio de tamanio imposible.");
-            }
-
-            for(int i = dif - 1; i >= 0; --i) {
-                if(buffer[i] != 0x00) {
-                    delete [] t;
-                    throw std::out_of_range("Cambio de tamanio imposible.");
-                }
-            }
-            // Llegados aquí, quiere decir que los enteros caben en el nuevo
-            // tamaño, así que copiamos los datos desde ents-1 hasta diff.
-            for(int i = long_ents - 1, j = le - 1; j >= 0; --i, --j)
-                t[j] = buffer[i];
-        }
-        else {
-            for(int i = long_ents - 1, j = le - 1; i >= 0; --i, --j)
-                t[j] = buffer[i];
-        }
-
-        // Ahora los bcddeces.
+        // Ahora los decimales. Para ello habrá que comprobar si hemos de redondear.
         if(nd < decs) {
-            // Tendremos que redondear, si es necesario.
-            //  1. Calcular la diferencia de bytes.
-            //  2. Eliminar el último byte, y redondear todo el bcddec.
-            //  3. Repetir para todos los bytes a eliminar.
-            unsigned int dif = long_decs - ld;
+            // Tenemos que reducir el numero de decimales. Comprobamos los que tenemos
+            // que eliminar, para controlar el acarreo.
+            int     i = 0,
+                    j = decs;
+            bool    acarreo = false;
 
-            bool acarreo = false;
+            while(j > nd) {
+                uint8_t x = this->get_cifra(i);
 
-            // Procesamos los bytes a eliminar, para ver si una vez eliminados
-            // tenemos que acarrear al último byte del nuevo tamaño.
-            for(int i = long_buffer - 1; i >= static_cast<int>(long_buffer - dif - 1); --i) {
-                if(acarreo) ++buffer[i];
+                if(acarreo)
+                    ++x;
 
-                if(buffer[i] > 49)
+                if(x > 4)
                     acarreo = true;
                 else
                     acarreo = false;
+
+                ++i;
+                --j;
             }
 
-            // Copiamos la parte del buffer que si cabe en el temporal.
-            for(int i = long_ents, j = le; j < static_cast<int>(lb); ++i, ++j) {
-                t[j] = buffer[i];
-            }
+            for(int k = 0, l = decs - nd; k < nc; ++k, ++l) {
+                uint8_t x = this->get_cifra(l);
 
-            // Ahora procesamos todo el temporal, para comprobar que todo va bien.
-            // Tendremos que comprobar que si el acarreo nos ha hecho incrementar
-            // la parte entera, esta no se salga de rango.
-            acarreo = false;
-
-            for(int i = lb - 1; i >= 0; --i) {
                 if(acarreo)
-                    ++t[i];
+                    ++x;
 
-                if(i == static_cast<int>(lb - 1)) {
-                    // El último byte. Podrá tener un valor máximo
-                    // dependiendo del numero de cifras del bcddec.
-                    if(t[i] > max_val_d) {
-                        // Nuestro último numero produce acarreo.
-                        // Ponemos a 0 e indicamos.
-                        t[i] = 0;
-                        acarreo = true;
-                    }
-                    else if((nd % 2) != 0) {
-                        // En caso de que el nuevo bcddec solo pueda
-                        // almacenar un numero impar de cifras, hay que
-                        // poner a 0 la menos significativa del par,
-                        // y comprobar que esta última cifra no produce
-                        // acarreo a la siguiente.
-                        if((t[i] % 10) > 4)
-                            t[i] = (((t[i] / 10) % 10) + 1) * 10;
-                        else
-                            t[i] = ((t[i] / 10) % 10) * 10;
-                    }
-                }
-                else if(t[i] >= 100) {
-                    t[i] = 0;
+                if(x > 9) {
                     acarreo = true;
+                    x -= 10;
                 }
                 else {
                     acarreo = false;
                 }
-            }
 
-            // Comprobamos que no nos hayamos salido de rango.
-            if((t[0] & 0x7F) > max_val_e) {
-                delete [] t;
-                throw std::out_of_range("Cambio de tamanio imposible.");
+                t.set_cifra(x, k);
             }
+            if(t.get_cifra(nc - 1) > 9)
+                throw std::out_of_range("El cambio de tamanio ha provocado desbordamiento.");
         }
-        else {
-            for(unsigned int i = long_ents, j = le; i < long_buffer; ++i, ++j)
-                t[j] = buffer[i];
+        else { // No se puede producir desbordamiento por redondeo. Copiamos.
+            for(int i = 0, j = nd - decs; i < ents+decs; ++i, ++j)
+                t.set_cifra(this->get_cifra(i), j);
         }
 
         // Actualizamos los datos.
         ents        = ne;
         decs        = nd;
-        long_ents   = le;
-        long_decs   = ld;
-        long_buffer = lb;
+        cifs        = nc;
+        long_buffer = t.long_buffer;
 
         delete [] buffer;
-        buffer  = t;
-        t       = nullptr;
+        buffer = new uint8_t[long_buffer];
 
-        if(signo)
-            this->set_negative();
+        std::memset(buffer, 0x00, sizeof(uint8_t[long_buffer]));
+        std::memcpy(buffer, t.buffer, sizeof(uint8_t[long_buffer]));
     }
 }
 
@@ -1040,5 +977,37 @@ char bcddec::bcd_to_char(uint8_t cifra, bool high)
     }
 }
 
+uint8_t bcddec::get_cifra(unsigned int pos)
+{
+    uint8_t res;
+
+    if(pos > (ents + decs - 1))
+        throw std::out_of_range("Imposible devolver la cifra.");
+
+    if((pos % 2) != 0) {
+        // Posicion impar, devolvemos el nybble alto del byte correspondiente.
+        res = static_cast<uint8_t>(bcd_to_char(buffer[pos/2], true)) & 0xF0;
+        res = res >> 4;
+    }
+    else {
+        res = static_cast<uint8_t>(bcd_to_char(buffer[pos/2], false)) & 0x0F;
+    }
+
+    return res;
+}
+
+void bcddec::set_cifra(uint8_t val, unsigned int pos)
+{
+    if(pos > (ents + decs - 1))
+        throw std::out_of_range("Imposible colocar la cifra.");
+
+    if((pos % 2) != 0)
+        // Posicion impar, colocamos el valor en el nybble alto del byte correspondiente.
+        buffer[pos/2] |= char_to_bcd(val, true);
+    else
+        buffer[pos/2] |= char_to_bcd(val, false);
+}
+
 }; // namespace fpt
+
 
