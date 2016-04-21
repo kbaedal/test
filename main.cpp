@@ -45,10 +45,17 @@ int main()
     a = "321";
     b = "123";
 
-//    std::cout << a.to_str() << " + " << b.to_str() << " = " << (a+b).to_str() << "\n";
-//    std::cout << a.to_str() << " - " << b.to_str() << " = " << (a-b).to_str(false) << "\n";
-//    std::cout << a.to_str() << " * " << b.to_str() << " = " << (a*b).to_str() << "\n";
-    std::cout << a.to_str() << " / " << b.to_str() << " = " << (a/b).to_str() << "\n";
+    fpt::bcddec c(6, 2);
+    //fpt::bcddec d(6, 2);
+
+    c = "8999.999";
+
+    std::cout << "c: " << c.to_str() << "\n";
+
+    // std::cout << a.to_str() << " + " << b.to_str() << " = " << (a+b).to_str() << "\n";
+    // std::cout << a.to_str() << " - " << b.to_str() << " = " << (a-b).to_str(false) << "\n";
+    // std::cout << a.to_str() << " * " << b.to_str() << " = " << (a*b).to_str() << "\n";
+    // std::cout << a.to_str() << " / " << b.to_str() << " = " << (a/b).to_str() << "\n";
 
     /*
     std::cout << "max(a) :  " << a.max().to_str() << "\n";

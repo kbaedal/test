@@ -518,12 +518,12 @@
 	<string>
 	"decimal.h"
 
-1461168332 c:\develop\projects\test\decimal.h
+1461251608 c:\develop\projects\test\decimal.h
 	<cstdint>
 	<string>
 	<iostream>
 
-1460735376 source:c:\develop\projects\test\main.cpp
+1461257743 source:c:\develop\projects\test\main.cpp
 	<iostream>
 	<string>
 	"decimal.h"
@@ -540,4 +540,15 @@
 	<string>
 	<algorithm>
 	"utiles.h"
+
+1461257685 source:c:\develop\projects\test\bcddec.cpp
+	<algorithm>
+	<bitset>
+	<cstdlib>
+	<cstring>
+	<iomanip>
+	<sstream>
+	<stdexcept>
+	<string>
+	"decimal.h"
 

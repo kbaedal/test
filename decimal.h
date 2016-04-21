@@ -424,7 +424,7 @@ class bcddec {
         unsigned int decs;          // Total racionales del número.
         unsigned int cifs;          // Total cifras del número.
 
-        unsigned int long_buffer;   // Tamaño total del buffer: int(cifs/2) + 1.
+        unsigned int long_buffer;   // Tamaño total del buffer.
 
         // Comprueba que str contenga un numero válido, ignorando espacios y otros
         // caracteres especiales tanto al principio como al final. Devuelve la
@@ -470,19 +470,24 @@ class bcddec {
         // Devuelve un digito codificado en BCD, en el nybble alto
         // si high = true, en el bajo de lo contrario.
         // En caso de que la cifra no se pueda convertir, devuelve 0xFF.
-        uint8_t char_to_bcd(char cifra, bool high);
+        uint8_t char_to_bcd(char cifra, bool high) const;
 
         // Devuelve un caracter que corresponde al dígito almacenado
         // en bcd. Si high = true decodifica el nybble alto, el bajo
         // en caso contrario.
-        char bcd_to_char(uint8_t cifra, bool high);
+        char bcd_to_char(uint8_t cifra, bool high) const;
 
         // Devuelve el valor de la cifra en la posicion indicada. La primera
         // posicion será la 0, y la última ents + decs - 1.
-        uint8_t get_cifra(unsigned int pos);
+        // Siempre devuelve el valor en el nybble bajo.
+        uint8_t get_cifra(unsigned int pos) const;
 
         // Coloca el valor de la cifra en la posicion indicada.
         void set_cifra(uint8_t val, unsigned int pos);
+
+        void print_buffer(std::string encab = "") const;
+
+        void print_bcd(uint8_t val, char sep = ' ') const;
 };
 
 }; // Namespace fpt

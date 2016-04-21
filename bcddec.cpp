@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <bitset>
 #include <cstdlib>
 #include <cstring>
 #include <iomanip>
@@ -10,13 +11,14 @@
 
 namespace fpt {
 
-bcddec::bcddec(unsigned int _c, unsigned int _d) : cifs(_c), ents(_c - _d), decs(_d)
+bcddec::bcddec(unsigned int _c, unsigned int _d) :  ents(_c - _d), decs(_d), cifs(_c)
 {
     if(cifs < 1)
         throw std::out_of_range("Numero de cifras incorrecto.");
 
     // Necesitamos 4 bits por cifra, 1 byte por cada 2 cifras.
-    long_buffer = static_cast<int>((cifs/2) + 1);
+    // Si cifs es impar, añadimos un byte por el redondeo.
+    long_buffer = ((cifs % 2) != 0) ? ((cifs/2) + 1) : (cifs/2);
 
     buffer      = new uint8_t[long_buffer];
 
@@ -24,7 +26,7 @@ bcddec::bcddec(unsigned int _c, unsigned int _d) : cifs(_c), ents(_c - _d), decs
 
     // Si tenemos un numero de cifras impar, ponemos el nybble superior
     // del ultimo byte a F, indicando que ese espacio no es usable.
-    if(((cifs) % 2) != 0)
+    if((cifs % 2) != 0)
         buffer[long_buffer - 1] = 0xF0;
 }
 
@@ -521,32 +523,32 @@ void bcddec::resize(unsigned int nc, unsigned int nd)
     if(nd > nc)
         throw std::invalid_argument("Numero de decimales incompatible con numero de cifras.");
 
-    unsigned int ne = nc - nd;
+
 
     if((nc != cifs) || (nd != decs)) {
         bcddec t(nc, nd);  // Temporal para operaciones.
 
+        unsigned int ne = nc - nd;
+
         // Comprobamos que las cifras por encima de lo que podemos almacenar sean 0.
-        if(nc - nd < ents)
-            for(int i = decs + nc - nd - 1; i < decs + ents; ++i)
+        if(ne < ents)
+            for(unsigned int i = decs + nc - nd - 1; i < decs + ents; ++i)
                 if(get_cifra(i) != 0)
-                    throw std::out_of_range("El cambio de tamanio ha provocado desbordamiento.");
+                    throw std::out_of_range("El cambio de tamanio ha provocado desbordamiento (enteros).");
 
         // Llegados aquí, sabemos que el contenido cabe en el nuevo tamaño, así pues,
         // después, tras comprobar los decimales y el posible acarreo, podremos copiar
         // sin riesgo.
-        //for(int i = nd, j = decs; i < nc; ++i, ++j)
-        //    t.set_cifra(this->get_cifra(j), i);
 
         // Ahora los decimales. Para ello habrá que comprobar si hemos de redondear.
         if(nd < decs) {
             // Tenemos que reducir el numero de decimales. Comprobamos los que tenemos
             // que eliminar, para controlar el acarreo.
-            int     i = 0,
-                    j = decs;
             bool    acarreo = false;
 
-            while(j > nd) {
+            for(unsigned int i = 0; i < decs - nd; ++i) {
+                // Desde el ultimo decimal del viejo número, hasta el anterior
+                // al que tenemos que copiar, comprobamos si se produce acarreo.
                 uint8_t x = this->get_cifra(i);
 
                 if(acarreo)
@@ -556,12 +558,11 @@ void bcddec::resize(unsigned int nc, unsigned int nd)
                     acarreo = true;
                 else
                     acarreo = false;
-
-                ++i;
-                --j;
             }
 
-            for(int k = 0, l = decs - nd; k < nc; ++k, ++l) {
+            // Si se ha producido acarreo, lo añadimos a la hora de copiar el
+            // contenido del viejo tamaño al nuevo tamaño.
+            for(unsigned int k = 0, l = decs - nd; k < nc; ++k, ++l) {
                 uint8_t x = this->get_cifra(l);
 
                 if(acarreo)
@@ -577,11 +578,14 @@ void bcddec::resize(unsigned int nc, unsigned int nd)
 
                 t.set_cifra(x, k);
             }
+
+            // Si la última cifra válida del número es mayor de nueve, entonces
+                // se ha producido un desbordamiento.
             if(t.get_cifra(nc - 1) > 9)
-                throw std::out_of_range("El cambio de tamanio ha provocado desbordamiento.");
+                throw std::out_of_range("El cambio de tamanio ha provocado desbordamiento (completo).");
         }
         else { // No se puede producir desbordamiento por redondeo. Copiamos.
-            for(int i = 0, j = nd - decs; i < ents+decs; ++i, ++j)
+            for(unsigned int i = 0, j = nd - decs; i < ents+decs; ++i, ++j)
                 t.set_cifra(this->get_cifra(i), j);
         }
 
@@ -612,7 +616,6 @@ void bcddec::convertir(const std::string &str)
                 nd = 0,
                 i = 0;
 
-
     // Comprobamos el signo.
     if(t[0] == '-') {
         neg = true;
@@ -641,12 +644,15 @@ void bcddec::convertir(const std::string &str)
     // Sacamos los caracteres de la cadena por pares, los traducimos
     // a bcd, y los colocamos en su sitio.
     while(t.size() > 1) { // Mientras que tengamos al menos 2 caracteres.
+        std::cout << "1. Convertir: " << t << "\n";
         lonybble = char_to_bcd(t.back(), false);
         t.pop_back();
         hinybble = char_to_bcd(t.back(), true);
         t.pop_back();
 
         x.buffer[i] = hinybble | lonybble;
+
+        i++;
     }
 
     if(t.size() != 0) {
@@ -655,7 +661,7 @@ void bcddec::convertir(const std::string &str)
         t.pop_back();
         hinybble = 0xFF;
 
-        x.buffer[0] = hinybble & lonybble;
+        x.buffer[x.long_buffer-1] = hinybble & lonybble;
     }
 
     // Cambiamos al temporal al tamaño que necesitamos.
@@ -700,66 +706,17 @@ bool bcddec::validar_cadena(const std::string &str, std::string &t)
 
 std::string bcddec::to_str(bool format) const
 {
-    // Sabiendo que el numero está codificado en bcd, la conversión
-    // a cadena debería ser trivial.
     std::string t;
+    char        x[2];
 
-    for(int i = 0; i < static_cast<int>(long_buffer); ++i) {
-        uint8_t x = buffer[i];
+    for(unsigned int i = 0; i < cifs; ++i) {
+        if(i == decs)
+            t.insert(0, ".");
 
-        if(i == 0 && this->is_negative())
-            // Eliminamos el bit de signo para imprimir el valor correcto.
-            x &= 0x7F;
-
-        if(i == static_cast<int>(long_ents))
-            t += '.';
-
-        // Si el numero de enteros es impar, del primer par de numeros
-        // tomaremos solamente una cifra.
-        // Lo mismo para los bcddeces, pero con el ultimo par.
-        // Hay que controlar si tenemos enteros solamente, si tenemos
-        // tanto enteros como bcddeces, o si solamente tenemos
-        // bcddeces.
-
-        if((i == 0) && ((ents % 2) != 0))
-            t += int_to_s(static_cast<int>(x), 2).substr(1, 1);
-        else if((i == static_cast<int>(long_buffer - 1)) && ((decs % 2) != 0))
-            t += int_to_s(static_cast<int>(x), 2).substr(0, 1);
-        else
-            t += int_to_s(static_cast<int>(x), 2);
+        x[0] = bcd_to_char(this->get_cifra(i), false);
+        x[1] = '\0';
+        t.insert(0, x);
     }
-
-    // Para imprimir:
-    //  1. Imprimir todo el buffer por pares en una cadena temporal.
-    //  2. Comprobar si tenemos enteros y bcddeces o no.
-    //      a. ENTEROS Y DECIMALES: Buscar la posicion del punto, y colocar.
-    //      b. SOLO DECIMALES: Colocar el punto al principio.
-    //      c. SOLO ENTEROS: No colocar el punto.
-    //  3. Eliminar, si sobran, la cifra inicial y/o la final.
-    //  4. Colocar el signo.
-
-    if(format) {
-        // Formateamos el número para que sea legible. Es decir,
-
-        // Eliminamos los ceros a la izquierda, dejandos los bcddeces.
-        t.erase(0, t.find_first_not_of("0"));
-
-        // Si no tenemos enteros, ponemos un 0 al principio.
-        if(t.size() != 0) {
-            if(t[0] == '.')
-                t.insert(0, 1, '0');
-        }
-        else {
-            // Si no tenemos ningún número, ponemos un 0.
-            // Este caso se puede dar al formatear un bcddec que tenga
-            // solamente parte entera y esté a 0.
-            t += "0";
-        }
-    }
-
-    if(this->is_negative())
-        // Si es necesario, insertamos el signo.
-        t.insert(0, 1, '-');
 
     return t;
 }
@@ -939,7 +896,7 @@ int bcddec::s_to_int(const std::string &s) const
     return res;
 }
 
-uint8_t bcddec::char_to_bcd(char cifra, bool high)
+uint8_t bcddec::char_to_bcd(char cifra, bool high) const
 {
     int shift = high ? 4 : 0;
 
@@ -958,11 +915,12 @@ uint8_t bcddec::char_to_bcd(char cifra, bool high)
     }
 }
 
-char bcddec::bcd_to_char(uint8_t cifra, bool high)
+char bcddec::bcd_to_char(uint8_t cifra, bool high) const
 {
-    int shift = high ? 4 : 0;
+    // Si es necesario, desplazamos los bits.
+    cifra = high ? cifra >> 4 : cifra;
 
-    switch(cifra >> shift) {
+    switch(cifra & 0x0F) { // Solo tenemos en cuenta el nybble inferior.
         case 0x00 : return '0';
         case 0x01 : return '1';
         case 0x02 : return '2';
@@ -977,20 +935,20 @@ char bcddec::bcd_to_char(uint8_t cifra, bool high)
     }
 }
 
-uint8_t bcddec::get_cifra(unsigned int pos)
+uint8_t bcddec::get_cifra(unsigned int pos) const
 {
     uint8_t res;
 
-    if(pos > (ents + decs - 1))
+    if(pos >= cifs)
         throw std::out_of_range("Imposible devolver la cifra.");
 
     if((pos % 2) != 0) {
         // Posicion impar, devolvemos el nybble alto del byte correspondiente.
-        res = static_cast<uint8_t>(bcd_to_char(buffer[pos/2], true)) & 0xF0;
+        res = buffer[pos/2] & 0xF0;
         res = res >> 4;
     }
     else {
-        res = static_cast<uint8_t>(bcd_to_char(buffer[pos/2], false)) & 0x0F;
+        res = buffer[pos/2] & 0x0F;
     }
 
     return res;
@@ -998,14 +956,39 @@ uint8_t bcddec::get_cifra(unsigned int pos)
 
 void bcddec::set_cifra(uint8_t val, unsigned int pos)
 {
-    if(pos > (ents + decs - 1))
+    if(pos >= cifs)
         throw std::out_of_range("Imposible colocar la cifra.");
 
-    if((pos % 2) != 0)
+    if((pos % 2) != 0) {
         // Posicion impar, colocamos el valor en el nybble alto del byte correspondiente.
-        buffer[pos/2] |= char_to_bcd(val, true);
-    else
-        buffer[pos/2] |= char_to_bcd(val, false);
+        val &= 0x0F;                // Solo los 4 bits del nybble inferior.
+        val = val << 4;             // Datos al nybble superior.
+        buffer[pos/2] &= 0x0F;      // Limpiamos posicion.
+        buffer[pos/2] |= val;       // Colocamos cifra.
+    }
+    else {
+        val &= 0x0F;                // Solo los 4 bits del nybble inferior.
+        buffer[pos/2] &= 0xF0;      // Limpiamos posicion.
+        buffer[pos/2] |= val;       // Colocamos la cifra.
+    }
+}
+
+void bcddec::print_buffer(std::string encab) const
+{
+    std::cout << encab << "Buffer[ ";
+    for(int i = long_buffer - 1; i >= 0; --i) {
+        print_bcd(this->buffer[i], '-');
+        std::cout  << " ";
+    }
+
+    std::cout << "]\n";
+}
+
+void bcddec::print_bcd(uint8_t val, char sep) const
+{
+    std::bitset<8> x(val);
+
+    std::cout << x.to_string().substr(0, 4) << sep << x.to_string().substr(4, 4);
 }
 
 }; // namespace fpt
