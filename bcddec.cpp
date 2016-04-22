@@ -16,6 +16,9 @@ bcddec::bcddec(unsigned int _c, unsigned int _d) :  ents(_c - _d), decs(_d), cif
     if(cifs < 1)
         throw std::out_of_range("Numero de cifras incorrecto.");
 
+    // Estado del decimal, por defecto todos los flags a 0.
+    status = 0x00;
+
     // Necesitamos 4 bits por cifra, 1 byte por cada 2 cifras.
     // Si cifs es impar, añadimos un byte por el redondeo.
     long_buffer = ((cifs % 2) != 0) ? ((cifs/2) + 1) : (cifs/2);
@@ -35,6 +38,8 @@ bcddec::bcddec(const bcddec &d)
     cifs        = d.cifs;
     ents        = d.ents;
     decs        = d.decs;
+
+    status      = d.status;
 
     long_buffer = d.long_buffer;
 
@@ -102,25 +107,23 @@ bcddec &bcddec::operator+=(const bcddec &d)
      *
      */
 
-    unsigned int max_val_e = ((ents % 2) != 0) ? 9 : 99;
-
-    // Cambiamos el tamaño del bcddec a sumar. Con esto garantizamos dos cosas:
+    // Cambiamos el tamaño del decimal a sumar. Con esto garantizamos dos cosas:
     //  1. Que la suma se pueda realizar (mismo numero de enteros y bcddeces).
     //  2. Que se haya redondeado el bcddec correctamente.
     bcddec s2(d);
-    s2.resize(ents + decs, decs);
+    s2.resize(cifs, decs);
 
     if(!this->is_negative() && !s2.is_negative()) { // S1(+), S2(+)
-        suma(s2.buffer);
+        suma(s2);
     }
     else if(!this->is_negative() && s2.is_negative()) { // S1(+), S2(-)
         s2.set_positive(); // Ambos son positivos ahora.
 
         if(*this >= s2) {
-            resta(s2.buffer);
+            resta(s2);
         }
         else {
-            s2.resta(buffer);
+            s2.resta(*this);
             *this = s2;
             this->set_negative();
         }
@@ -129,11 +132,11 @@ bcddec &bcddec::operator+=(const bcddec &d)
         this->set_positive(); // Ambos positivos ahora.
 
         if(*this >= s2) {
-            resta(s2.buffer);
+            resta(s2);
             this->set_negative();
         }
         else {
-            s2.resta(buffer);
+            s2.resta(*this);
             *this = s2;
         }
     }
@@ -142,12 +145,12 @@ bcddec &bcddec::operator+=(const bcddec &d)
         this->set_positive();
         s2.set_positive();
 
-        suma(s2.buffer);
+        suma(s2);
         this->set_negative();
     }
 
     // Comprobamos que no nos hayamos salido de rango.
-    if((buffer[0] & 0x7F) > max_val_e)
+    if(this->get_cifra(cifs-1) > 9)
         throw std::out_of_range("La suma ha producido desbordamiento.");
 
     return *this;
@@ -177,20 +180,18 @@ bcddec &bcddec::operator-=(const bcddec &d)
      *
      */
 
-    unsigned int max_val_e = ((ents % 2) != 0) ? 9 : 99;
-
     // Cambiamos el tamaño del bcddec a restar. Con esto garantizamos dos cosas:
     //  1. Que la resta se pueda realizar (mismo numero de enteros y bcddeces).
     //  2. Que se haya redondeado el bcddec correctamente.
     bcddec ss(d);
-    ss.resize(ents + decs, decs);
+    ss.resize(cifs, decs);
 
     if(!this->is_negative() && !ss.is_negative()) { // M(+), S(+)
         if(*this >= ss) {
-            resta(ss.buffer);
+            resta(ss);
         }
         else {
-            ss.resta(buffer);
+            ss.resta(*this);
             *this = ss;
             this->set_negative();
         }
@@ -198,12 +199,12 @@ bcddec &bcddec::operator-=(const bcddec &d)
     else if(!this->is_negative() && ss.is_negative()) { // M(+), S(-)
         ss.set_positive(); // Ambos positivos.
 
-        suma(ss.buffer);
+        suma(ss);
     }
     else if(this->is_negative() && !ss.is_negative()) { // M(-), S(+)
         this->set_positive(); // Ambos positivos ahora.
 
-        suma(ss.buffer);
+        suma(ss);
         this->set_negative();
     }
     else if(this->is_negative() && ss.is_negative()) { // M(-), S(-)
@@ -212,65 +213,69 @@ bcddec &bcddec::operator-=(const bcddec &d)
         ss.set_positive();
 
         if(*this >= ss) {
-            resta(ss.buffer);
+            resta(ss);
             this->set_negative();
         }
         else {
-            ss.resta(buffer);
+            ss.resta(*this);
             *this = ss;
         }
     }
 
     // Comprobamos que no nos hayamos salido de rango.
-    if((buffer[0] & 0x7F) > max_val_e)
+    if(this->get_cifra(cifs-1) > 9)
         throw std::out_of_range("La resta ha producido desbordamiento.");
 
     return *this;
 }
 
-void bcddec::suma(const uint8_t *sum)
+void bcddec::suma(const bcddec &sum)
 {
-    // Por cada pareja de numeros (posicion del buffer), empezando por el final:
+    // Por cada cifra del decimal, empezando por el final:
     //  1. Sumamos ambos numeros.
-    //  2. Si las suma pasa de 100 acarreamos para el siguiente par y restamos 100 a este par.
+    //  2. Si la suma pasa de 10 acarreamos para el siguiente par y restamos 10 a este par.
 
     bool acarreo = false;
 
-    for(int i = long_buffer - 1; i > 0; --i) {
-        uint8_t op1 = buffer[i];
-        uint8_t op2 = sum[i];
+    for(int i = 0; i < cifs; ++i) {
+        uint8_t op1 = this->get_cifra(i);
+        uint8_t op2 = sum.get_cifra(i);
         uint8_t op3 = op1 + op2;
 
         if(acarreo) ++op3;
 
-        if(op3 >= 100) {
+        if(op3 >= 10) {
             acarreo = true;
-            op3 -= 100;
+            op3 -= 10;
         }
         else {
             acarreo = false;
         }
 
-        buffer[i] = op3;
+        // Control para el overflow.
+        if(acarreo && (i == cifs-1))
+            this->set_cifra(10, i);
+        else
+            this->set_cifra(op3, i);
     }
- }
+}
 
-void bcddec::resta(const uint8_t *res)
+void bcddec::resta(const bcddec &res)
 {
-    // Por cada pareja de numeros (posicion del buffer), empezando por el final:
+    // Por cada cifra del decimal, empezando por el final:
     //  1. Comprobamos si operador 1 es mayor o igual operador 2.
-    //  2. Si lo es, restamos. Si no, añadimos 100, indicando acarreo para el siguiente, y restamos.
+    //  2. Si lo es, restamos. Si no, añadimos 10, indicando acarreo para el siguiente, y restamos.
 
     bool acarreo = false;
 
-    for(int i = long_buffer - 1; i > 0; --i) {
-        uint8_t op1 = buffer[i];
-        uint8_t op2 = res[i];
+    for(int i = 0; i < cifs; ++i) {
+        uint8_t op1 = this->get_cifra(i);
+        uint8_t op2 = res.get_cifra(i);
 
         if(acarreo) ++op2;
 
         if(op1 < op2) {
-            op1 += 100;
+            op1 += 10;
             acarreo = true;
         }
         else {
@@ -279,12 +284,13 @@ void bcddec::resta(const uint8_t *res)
 
         int op3 = op1 - op2;
 
-        buffer[i] = op3;
+        this->set_cifra(op3, i);
     }
 }
 
 bcddec &bcddec::operator*=(const bcddec &d)
 {
+    /*
     // Declaramos un temporal que tendrá siempre un numero
     // par de cifras, y que será como minimo igual de grande
     // que el bcddec original. Así garantizamos que las
@@ -338,7 +344,7 @@ bcddec &bcddec::operator*=(const bcddec &d)
             res_mult[x - 1] = h_par;
 
             // Sumamos al resultado.
-            r.suma(res_mult);
+            //r.suma(res_mult);
         }
     }
 
@@ -349,7 +355,37 @@ bcddec &bcddec::operator*=(const bcddec &d)
         this->set_negative();
 
     delete [] res_mult;
+    */
+    uint8_t res = 0,
+            acarreo = 0;
 
+    bcddec  t1(2 * cifs, 2 * decs),
+            t2(2 * cifs, 2 * decs);
+
+    for(int i = 0; i < cifs; ++i) {
+        t1 = "0";
+        if(this->get_cifra(i) != 0) {
+            for(int j = 0; j < cifs; ++j) {
+                res = this->get_cifra(i) * d.get_cifra(j);
+
+                res += acarreo;
+
+                if(res > 10) {
+                    acarreo = (res / 10) % 10;
+                    res = res % 10;
+                }
+
+                t1.set_cifra(res, i + j);
+                std::cout << "t1: " << t1.to_str() << "\n";
+            }
+            t2 += t1;
+        }
+    }
+
+    std::cout << "t2: " << t2.to_str() << "\n";
+
+    t2.resize(cifs, decs);
+    *this = t2;
     return *this;
 }
 
@@ -518,17 +554,14 @@ void bcddec::resize(unsigned int nc, unsigned int nd)
     //  2. Para los bcddeces, simplemente tendremos que tener
     //      cuidado con el redondeo.
 
-    // Comprobamos que realmente haya que cambiar el tamaño.
-
     if(nd > nc)
         throw std::invalid_argument("Numero de decimales incompatible con numero de cifras.");
 
+    unsigned int    ne  = nc - nd;  // Nuevo numero de enteros.
 
-
-    if((nc != cifs) || (nd != decs)) {
-        bcddec t(nc, nd);  // Temporal para operaciones.
-
-        unsigned int ne = nc - nd;
+    // Comprobamos que realmente haya que cambiar el tamaño.
+    if((ne != ents) || (nd != decs)) {
+        bcddec          t(nc, nd);      // Temporal para operaciones.
 
         // Comprobamos que las cifras por encima de lo que podemos almacenar sean 0.
         if(ne < ents)
@@ -562,7 +595,7 @@ void bcddec::resize(unsigned int nc, unsigned int nd)
 
             // Si se ha producido acarreo, lo añadimos a la hora de copiar el
             // contenido del viejo tamaño al nuevo tamaño.
-            for(unsigned int k = 0, l = decs - nd; k < nc; ++k, ++l) {
+            for(unsigned int k = 0, l = decs - nd; (l < cifs) && (k < nc); ++k, ++l) {
                 uint8_t x = this->get_cifra(l);
 
                 if(acarreo)
@@ -580,12 +613,12 @@ void bcddec::resize(unsigned int nc, unsigned int nd)
             }
 
             // Si la última cifra válida del número es mayor de nueve, entonces
-                // se ha producido un desbordamiento.
+            // se ha producido un desbordamiento.
             if(t.get_cifra(nc - 1) > 9)
                 throw std::out_of_range("El cambio de tamanio ha provocado desbordamiento (completo).");
         }
         else { // No se puede producir desbordamiento por redondeo. Copiamos.
-            for(unsigned int i = 0, j = nd - decs; i < ents+decs; ++i, ++j)
+            for(unsigned int i = 0, j = nd - decs; (i < cifs) && (j < nc); ++i, ++j)
                 t.set_cifra(this->get_cifra(i), j);
         }
 
@@ -621,6 +654,8 @@ void bcddec::convertir(const std::string &str)
         neg = true;
         t.erase(0, 1);
     }
+    else
+        neg = false;
 
     // Buscamos el punto.
     pos_punto = t.find_first_of('.');
@@ -644,7 +679,6 @@ void bcddec::convertir(const std::string &str)
     // Sacamos los caracteres de la cadena por pares, los traducimos
     // a bcd, y los colocamos en su sitio.
     while(t.size() > 1) { // Mientras que tengamos al menos 2 caracteres.
-        std::cout << "1. Convertir: " << t << "\n";
         lonybble = char_to_bcd(t.back(), false);
         t.pop_back();
         hinybble = char_to_bcd(t.back(), true);
@@ -652,7 +686,7 @@ void bcddec::convertir(const std::string &str)
 
         x.buffer[i] = hinybble | lonybble;
 
-        i++;
+        ++i;
     }
 
     if(t.size() != 0) {
@@ -665,11 +699,13 @@ void bcddec::convertir(const std::string &str)
     }
 
     // Cambiamos al temporal al tamaño que necesitamos.
-    x.resize(ents+decs, decs);
+    x.resize(cifs, decs);
     *this = x;
 
     if(neg)
         this->set_negative();
+    else
+        this->set_positive();
 }
 
 bool bcddec::validar_cadena(const std::string &str, std::string &t)
@@ -707,16 +743,25 @@ bool bcddec::validar_cadena(const std::string &str, std::string &t)
 std::string bcddec::to_str(bool format) const
 {
     std::string t;
-    char        x[2];
 
     for(unsigned int i = 0; i < cifs; ++i) {
-        if(i == decs)
-            t.insert(0, ".");
+        if(i == decs && decs != 0)
+            t.insert(0, 1, '.');
 
-        x[0] = bcd_to_char(this->get_cifra(i), false);
-        x[1] = '\0';
-        t.insert(0, x);
+        t.insert(0, 1, bcd_to_char(this->get_cifra(i), false));
     }
+
+    // Para formatear el numero, eliminamos los 0 a las izquiera.
+    if(format) {
+        t.erase(0, t.find_first_not_of("0"));
+
+        // Si no tenemos ningún entero, al menos dejamos un 0.
+        if(t[0] == '.')
+            t.insert(0, 1, '0');
+    }
+
+    if(this->is_negative())
+        t.insert(0, 1, '-');
 
     return t;
 }
@@ -730,7 +775,7 @@ bool operator==(const bcddec &a, const bcddec &b)
     if(a.is_negative() != b.is_negative()) return false;
 
     bcddec t(b);
-    t.resize(a.decs + a.ents, a.decs);
+    t.resize(a.cifs, a.decs);
 
     for(int i = 0; i < static_cast<int>(a.long_buffer); ++i)
         if(a.buffer[i] != t.buffer[i])
@@ -741,7 +786,7 @@ bool operator==(const bcddec &a, const bcddec &b)
 
 bool operator==(const bcddec &a, const std::string &b)
 {
-    bcddec t(a.ents + a.decs, a.decs);
+    bcddec t(a.cifs, a.decs);
 
     t = b;
 
@@ -752,21 +797,21 @@ bool operator>=(const bcddec &a, const bcddec &b)
 {
     // 1. Comparamos signos. Si son distintos, el positivo es el mayor.
     // 2. Cambiamos el tamaño de b para que coincida con el de a.
-    // 3. Comparamos byte a byte, y devolvemos en consecuencia.
+    // 3. Comparamos cifra a cifra y devolvemos en consecuencia.
 
     if(a.is_negative() != b.is_negative())
         return !a.is_negative();
 
     bcddec t(b);
-    t.resize(a.decs + a.ents, a.decs);
+    t.resize(a.cifs, a.decs);
 
     bool    a_mayor = false,
             iguales = true;
 
-    for(int i = 0; i < static_cast<int>(a.long_buffer); ++i) {
-        if(a.buffer[i] != t.buffer[i]) {
+    for(int i = a.cifs - 1; i >= 0; --i) {
+        if(a.get_cifra(i) != t.get_cifra(i)) {
             iguales = false;
-            if(a.buffer[i] > t.buffer[i]) {
+            if(a.get_cifra(i) > t.get_cifra(i)) {
                 a_mayor = true;
             }
             break;
@@ -784,21 +829,21 @@ bool operator<=(const bcddec &a, const bcddec &b)
 {
     // 1. Comparamos signos. Si son distintos, el negativo es el menor.
     // 2. Cambiamos el tamaño de b para que coincida con el de a.
-    // 3. Comparamos byte a byte, y devolvemos en consecuencia.
+    // 3. Comparamos cifra a cifra, y devolvemos en consecuencia.
 
     if(a.is_negative() != b.is_negative())
         return a.is_negative();
 
     bcddec t(b);
-    t.resize(a.decs + a.ents, a.decs);
+    t.resize(a.cifs, a.decs);
 
     bool    a_menor = false,
             iguales = true;
 
-    for(int i = 0; i < static_cast<int>(a.long_buffer); ++i) {
-        if(a.buffer[i] != t.buffer[i]) {
+    for(int i = a.cifs - 1; i >= 0; --i) {
+        if(a.get_cifra(i) != t.get_cifra(i)) {
             iguales = false;
-            if(a.buffer[i] < t.buffer[i]) {
+            if(a.get_cifra(i) < t.get_cifra(i)) {
                 a_menor = true;
             }
             break;
@@ -956,8 +1001,11 @@ uint8_t bcddec::get_cifra(unsigned int pos) const
 
 void bcddec::set_cifra(uint8_t val, unsigned int pos)
 {
-    if(pos >= cifs)
-        throw std::out_of_range("Imposible colocar la cifra.");
+    if(pos >= cifs) {
+        std::string exc_t = "Imposible colocar la cifra. (val, pos): " + int_to_s(val) + ", " + int_to_s(pos);
+
+        throw std::out_of_range(exc_t);
+    }
 
     if((pos % 2) != 0) {
         // Posicion impar, colocamos el valor en el nybble alto del byte correspondiente.

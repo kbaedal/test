@@ -426,6 +426,10 @@ class bcddec {
 
         unsigned int long_buffer;   // Tamaño total del buffer.
 
+        uint8_t status;             // Flags de status del decimal.
+                                    // Bit 0: Signo (0 positivo, 1 negativo).
+                                    // Bit 1: Overflow (0 no hay, 1 sí hay).
+
         // Comprueba que str contenga un numero válido, ignorando espacios y otros
         // caracteres especiales tanto al principio como al final. Devuelve la
         // cadena sin estos caracteres en t.
@@ -438,31 +442,35 @@ class bcddec {
 
         bool is_negative() const
         {
-            // El bit más significativo del primer byte del array nos indicará
-            // si el bcddec es negatvo o positivo.
-            return ((buffer[0] & 0x80) == 0x80);
+            return (status & 0x01);
         }
 
         void set_negative()
         {
-            buffer[0] |= 0x80;
+            status |= 0x01;
         }
 
         void set_positive()
         {
-            buffer[0] &= 0x7F;
+            status &= 0xFE; // 1111 1110
+        }
+
+        bool overflow()
+        {
+            return (status & 0x02); // 0000 0010
         }
 
         // Suma al bcddec los datos de sum. Condiciones:
-        //  1. sizeof(sum) == sizeof(buffer)
+        //  1. sizeof(sum.buffer) == sizeof(this->buffer)
         //  2. Ambos datos deben ser positivos.
-        void suma(const uint8_t *sum);
+        // Devuelve true su la suma de las cifras más significativas ha producido acarreo.
+        void suma(const bcddec &sum);
 
         // Resta del bcddec los datos de res. Condiciones:
-        //  1. sizeof(res) == sizeof(buffer)
+        //  1. sizeof(sum.buffer) == sizeof(this->buffer)
         //  2. Ambos datos deben ser positivos.
         //  3. La resta debe dar un resultado positivo.
-        void resta(const uint8_t *res);
+        void resta(const bcddec &res);
 
         // Obtiene el inverso multiplicativo, tal que i*d = 1.
         bcddec inverse() const;
