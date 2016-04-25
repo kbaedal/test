@@ -45,13 +45,14 @@ int main()
     a = "321";
     b = "123";
 
-    fpt::bcddec c(10, 5);
-    fpt::bcddec d(10, 5);
+    fpt::bcddec c(10, 6);
+    fpt::bcddec d(10, 6);
 
-    c = "4.123";
-    d = "1.234";
+    c = "7.654321";
+    d = "1.234567";
 
     std::cout << c.to_str() << " * " << d.to_str() << " = " << (c*d).to_str() << "\n";
+    std::cout << c.to_str() << " / " << d.to_str() << " = " << (c/d).to_str() << "\n";
     // std::cout << a.to_str() << " - " << b.to_str() << " = " << (a-b).to_str() << "\n";
     // std::cout << a.to_str() << " * " << b.to_str() << " = " << (a*b).to_str() << "\n";
     // std::cout << a.to_str() << " / " << b.to_str() << " = " << (a/b).to_str() << "\n";

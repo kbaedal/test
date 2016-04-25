@@ -290,102 +290,56 @@ void bcddec::resta(const bcddec &res)
 
 bcddec &bcddec::operator*=(const bcddec &d)
 {
-    /*
-    // Declaramos un temporal que tendrá siempre un numero
-    // par de cifras, y que será como minimo igual de grande
-    // que el bcddec original. Así garantizamos que las
-    // operaciones de multiplicacion se realizan siempre
-    // sobre números de dos cifras, y se almacenan correctamente
-    // en el buffer temporal.
-    int te  = (ents % 2) != 0 ? ents + 1 : ents;
-    int td  = (decs % 2) != 0 ? decs + 1 : decs;
-    int tlb = long_buffer * 2;
-    bcddec r((te + td) * 2, td * 2);
 
-    // Y un buffer donde almacenar nuestras multiplicaciones.
-    uint8_t *res_mult = new uint8_t[tlb];
-    std::memset(res_mult, 0x00, sizeof(uint8_t[tlb]));
+    // Declaramos un temporal que tendrá el doble de cifras
+    // que los numeros que estamos multiplicando. Cambiaremos
+    // el tamaño del multiplicador si es necesario para que
+    // coincida con el del multiplicando.
+    // Y la multiplicacion se reduce a ir haciendo multiplicaciones
+    // parciales y acumulando el resultado, siempre controlando
+    // en que lugar colocamos el resultado.
 
-    // Hacemos que el multiplicador sea del mismo tamaño.
-    bcddec t(d);
-    t.resize(ents+decs, decs);
-
-    // Calculamos el signo del resultado.
-    // Negativo si signos diferentes, positivo si iguales.
-    bool res_negativo = (this->is_negative() != t.is_negative());
-
-    // Hacemos que ambos sean positivos.
-    this->set_positive();
-    t.set_positive();
-
-    // Multiplicamos por parejas y sumamos, colocando el resultado
-    // en el lugar adecuado.
-    for(int i = long_buffer - 1; i >= 0; --i) {
-        for(int j = long_buffer -1; j >= 0; --j) {
-            // Limpiamos nuestro buffer temporal.
-            std::memset(res_mult, 0x00, sizeof(uint8_t[tlb]));
-
-            // Multiplicamos la pareja.
-            // Sabemos que el valor máximo de cada par es 99, por lo que
-            // el resultado máximo posible es 9801.
-            int m   = static_cast<int>(buffer[i]);
-            int n   = static_cast<int>(t.buffer[j]);
-            int mxn = m * n;
-
-            // Posicion a escribir en el buffer temporal.
-            int x = j + i + 1;
-
-            // En cada byte, su valor correspondiente.
-            uint8_t l_par = static_cast<uint8_t>(mxn % 10 + ((mxn / 10) % 10) * 10);
-            uint8_t h_par = static_cast<uint8_t>((mxn / 100) % 10 + ((mxn / 1000) % 10) * 10);
-
-            // Los colocamos en su lugar correspondiente del buffer.
-            res_mult[x]     = l_par;
-            res_mult[x - 1] = h_par;
-
-            // Sumamos al resultado.
-            //r.suma(res_mult);
-        }
-    }
-
-    r.resize(ents + decs, decs);
-    *this = r;
-
-    if(res_negativo)
-        this->set_negative();
-
-    delete [] res_mult;
-    */
     uint8_t res = 0,
             acarreo = 0;
 
-    bcddec  t1(2 * cifs, 2 * decs),
-            t2(2 * cifs, 2 * decs);
+    bcddec  mtdr(d),                    // Multiplicador, para poder cambiar tamaño.
+            t1(2 * cifs, 2 * decs),     // Temporal donde colocaremos las multiplicaciones parciales.
+            t2(2 * cifs, 2 * decs);     // Acumulador. Sumamos aquí las multiplicaciones.
+
+    bool res_negativo = (this->is_negative() != d.is_negative());
+
+    mtdr.resize(cifs, decs);
 
     for(int i = 0; i < cifs; ++i) {
         t1 = "0";
         if(this->get_cifra(i) != 0) {
             for(int j = 0; j < cifs; ++j) {
-                res = this->get_cifra(i) * d.get_cifra(j);
+                res = this->get_cifra(i) * mtdr.get_cifra(j);
 
                 res += acarreo;
+                acarreo = 0;
 
-                if(res > 10) {
+                if(res >= 10) {
                     acarreo = (res / 10) % 10;
                     res = res % 10;
                 }
 
                 t1.set_cifra(res, i + j);
-                std::cout << "t1: " << t1.to_str() << "\n";
             }
             t2 += t1;
         }
     }
 
-    std::cout << "t2: " << t2.to_str() << "\n";
-
+    // Cambiamos de tamaño para acomodarlo.
     t2.resize(cifs, decs);
+    // Y copiamos el resultado.
     *this = t2;
+
+    if(res_negativo)
+        this->set_negative();
+    else
+        this->set_positive();
+
     return *this;
 }
 
@@ -431,10 +385,9 @@ bcddec bcddec::inverse() const
     //              x = r;
     //      }
     //
-
     unsigned int    te = ents,
-                    td = decs == 0 ? static_cast<int>(ents/2+1) : decs,
-                    tc = te + td;
+                    td = decs,
+                    tc = cifs;
 
     int             i = 2;  // Veces que aumentaremos bcddeces para mejorar la
                             // precision. Equivale a añadir 4 bcddeces para mejorar
@@ -442,7 +395,7 @@ bcddec bcddec::inverse() const
                             // las consideramos insignificantes, aumentar bcddeces
                             // no va a producir un resultado mejor.
 
-    bcddec p(tc, td),  // Precision deseada.
+    bcddec  p(tc, td),  // Precision deseada.
             x(tc, td),  // Resultado.
             r(tc, td),  // Variable para controlar el resultado.
             c(tc, td);  // Almacenamos el contenido actual del bcddec.
@@ -461,11 +414,6 @@ bcddec bcddec::inverse() const
     // Aplicamos Newton-Raphson, y repetimos hasta i veces para mejorar la precision.
     while(--i) {
         while((x * c) > ("1.0" + p) || (x * c) < ("1.0" - p)) {
-            std::cerr << "p: " << p.to_str() << "\n";
-            std::cerr << "x: " << x.to_str() << "\n";
-            std::cerr << "r: " << r.to_str() << "\n";
-            std::cerr << "c: " << c.to_str() << "\n";
-
             r = x * ("2.0" - c * x);
 
             // Comprobamos si hemos alcanzado el valor más próximo posible
@@ -504,25 +452,16 @@ bcddec &bcddec::operator/=(const bcddec &d)
     // el doble de tamaño del original para asegurar la precisión
     // del cáculo.
 
-    std::cerr << "Division: " << this->to_str() <<  " / " << d.to_str() << "\n";
-
     if(d.abs() == d.zero()) {
         throw std::invalid_argument("Division entre 0.");
     }
     else {
-        int te  = (ents % 2) != 0 ? ents + 1 : ents;
-        int td  = (decs % 2) != 0 ? decs + 1 : decs;
-        int tc  = te + td;
+        int ne  = (ents != 0) ? ents * 2 : 2;
+        int nd  = (decs != 0) ? ents * 2 : 2;
+        int nc  = ne + nd;
 
-        std::cerr << "1. (ents, decs, te, td, tc): ";
-        std::cerr << int_to_s(ents) << ", ";
-        std::cerr << int_to_s(decs) << ", ";
-        std::cerr << int_to_s(te) << ", ";
-        std::cerr << int_to_s(td) << ", ";
-        std::cerr << int_to_s(tc) << "\n";
-
-        bcddec r((tc) * 2, td * 2),
-                n((tc) * 2, td * 2);
+        bcddec r(nc, nd),
+               n(nc, nd);
 
         bool res_negativo = (this->is_negative() != d.is_negative());
 
@@ -533,8 +472,6 @@ bcddec &bcddec::operator/=(const bcddec &d)
         r.set_positive();
 
         r = r.inverse();
-
-        std::cerr << "(n * r): " << n.to_str() <<  " * " << r.to_str() << "\n";
 
         *this = n * r;
 
@@ -561,11 +498,11 @@ void bcddec::resize(unsigned int nc, unsigned int nd)
 
     // Comprobamos que realmente haya que cambiar el tamaño.
     if((ne != ents) || (nd != decs)) {
-        bcddec          t(nc, nd);      // Temporal para operaciones.
+        bcddec  t(nc, nd);      // Temporal para operaciones.
 
         // Comprobamos que las cifras por encima de lo que podemos almacenar sean 0.
         if(ne < ents)
-            for(unsigned int i = decs + nc - nd - 1; i < decs + ents; ++i)
+            for(unsigned int i = decs + nc - nd; i < decs + ents; ++i)
                 if(get_cifra(i) != 0)
                     throw std::out_of_range("El cambio de tamanio ha provocado desbordamiento (enteros).");
 
@@ -595,8 +532,11 @@ void bcddec::resize(unsigned int nc, unsigned int nd)
 
             // Si se ha producido acarreo, lo añadimos a la hora de copiar el
             // contenido del viejo tamaño al nuevo tamaño.
-            for(unsigned int k = 0, l = decs - nd; (l < cifs) && (k < nc); ++k, ++l) {
-                uint8_t x = this->get_cifra(l);
+            for(unsigned int k = 0, l = decs - nd; k < nc; ++k, ++l) {
+                uint8_t x = 0;
+
+                if(l < cifs)
+                    x = this->get_cifra(l);
 
                 if(acarreo)
                     ++x;
@@ -868,43 +808,29 @@ bcddec bcddec::abs() const
 
 bcddec bcddec::max() const
 {
-    // Ojo, varias posibilidades:
-    //  1. Solo bcddeces.
-    //  2. Solo enteros.
-    //  3. Decimales y enteros.
+    // Todo a 9, signo positivo.
 
     bcddec t(*this);
 
-    uint8_t max_val_inicio  = ((t.ents % 2) != 0) ? 9 : 99;
-    uint8_t max_val_final   = ((t.decs % 2) != 0) ? 90 : 99;
-    uint8_t max_val_num     = 99;
+    for(unsigned int i = 0; i < t.cifs; ++i)
+        t.set_cifra(9, i);
 
-    for(int i = 0; i < static_cast<int>(t.long_buffer); ++i) {
-        if(i == 0 && t.ents != 0)
-            t.buffer[i] = max_val_inicio;
-        else if(i == static_cast<int>(t.long_buffer - 1) && t.decs != 0)
-            t.buffer[i] = max_val_final;
-        else
-            t.buffer[i] = max_val_num;
-    }
+    t.set_positive();
 
     return t;
 }
 
 bcddec bcddec::min() const
 {
-    // Poner todo a cero y el ultimo byte a lo que
-    // corresponda según las cifras que tengamos y si
-    // hay bcddeces o no.
+    // Todo a 0 excepto última cifra. Signo positivo.
+
     bcddec t(*this);
 
-    for(int i = 0; i < static_cast<int>(t.long_buffer); ++i)
-        t.buffer[i] = 0;
+    std::memset(t.buffer, 0x00, sizeof(uint8_t[t.long_buffer]));
 
-    if(t.decs != 0)
-        t.buffer[t.long_buffer-1] = ((t.decs % 2) != 0) ? 10 : 01;
-    else
-        t.buffer[t.long_buffer-1] = 1;
+    t.set_cifra(1, 0);
+
+    t.set_positive();
 
     return t;
 }
