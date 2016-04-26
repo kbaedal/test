@@ -19,6 +19,13 @@
 namespace fpt {
 
 class decimal {
+    // Nuevo experimento. Esta vez codificando las cifras en bcd,
+    // y almacenando el número en orden lógico, es decir, la ultima
+    // cifra (la menos significativa) queda almacenada en el la
+    // primera posición del buffer.
+    //
+    // Es probable que este orden facilite las cosas, pero ya veremos.
+
     public:
         // Constructores
         decimal(unsigned int _c, unsigned int _d);
@@ -31,7 +38,7 @@ class decimal {
         decimal &operator=(const decimal &d);
         decimal &operator=(const std::string &val);
 
-        // Operadors - Negación
+        // Operador: Negación.
         decimal operator-()
         {
             decimal t(*this);
@@ -44,16 +51,25 @@ class decimal {
             return t;
         }
 
+        // Operador: + unario.
+        decimal operator+()
+        {
+            decimal t(*this);
+
+            return t;
+        }
+
         // Operadores - Suma y Resta.
         decimal &operator+=(const decimal &d);
         friend decimal operator+(decimal a, const decimal &b)
         {
             a += b;
+
             return a;
         }
         friend decimal operator+(decimal a, const std::string &val)
         {
-            decimal t(a.ents + a.decs, a.decs);
+            decimal t(a.cifs, a.decs);
             t = val;
             a += t;
 
@@ -68,11 +84,12 @@ class decimal {
         friend decimal operator-(decimal a, const decimal &b)
         {
             a -= b;
+
             return a;
         }
         friend decimal operator-(decimal a, const std::string &val)
         {
-            decimal t(a.ents + a.decs, a.decs);
+            decimal t(a.cifs, a.decs);
             t = val;
             a -= t;
 
@@ -80,7 +97,7 @@ class decimal {
         }
         friend decimal operator-(const std::string &val, decimal a)
         {
-            decimal t(a.ents + a.decs, a.decs);
+            decimal t(a.cifs, a.decs);
             t = val;
             t -= a;
 
@@ -92,11 +109,12 @@ class decimal {
         friend decimal operator*(decimal a, const decimal &b)
         {
             a *= b;
+
             return a;
         }
         friend decimal operator*(decimal a, const std::string &val)
         {
-            decimal t(a.ents + a.decs, a.decs);
+            decimal t(a.cifs, a.decs);
             t = val;
             a *= t;
 
@@ -104,7 +122,7 @@ class decimal {
         }
         friend decimal operator*(const std::string &val, decimal a)
         {
-            decimal t(a.ents + a.decs, a.decs);
+            decimal t(a.cifs, a.decs);
             t = val;
             t *= a;
 
@@ -115,6 +133,7 @@ class decimal {
         friend decimal operator/(decimal a, const decimal &b)
         {
             a /= b;
+
             return a;
         }
         friend decimal operator/(decimal a, const std::string &val)
@@ -192,235 +211,6 @@ class decimal {
         uint8_t *buffer;
 
         unsigned int ents;          // Total enteros del número.
-        unsigned int long_ents;     // Tamaño del array para los enteros: ((ents - 1)/2) + 1
-        unsigned int decs;          // Total decimales del número.
-        unsigned int long_decs;     // Tamaño del array para los decimales: ((decs - 1)/2) + 1
-
-        unsigned int long_buffer;   // Tamaño total del buffer: long_ents + long_decs
-
-        // Comprueba que str contenga un numero válido, ignorando espacios y otros
-        // caracteres especiales tanto al principio como al final. Devuelve la
-        // cadena sin estos caracteres en t.
-        bool validar_cadena(const std::string &str, std::string &t);
-        void convertir(const std::string &str); // Convierte el número a formato interno.
-
-        std::string int_to_s(const int &n, int width = 0) const;
-
-        int s_to_int(const std::string &s) const;
-
-        bool is_negative() const
-        {
-            // El bit más significativo del primer byte del array nos indicará
-            // si el decimal es negatvo o positivo.
-            return ((buffer[0] & 0x80) == 0x80);
-        }
-
-        void set_negative()
-        {
-            buffer[0] |= 0x80;
-        }
-
-        void set_positive()
-        {
-            buffer[0] &= 0x7F;
-        }
-
-        // Suma al decimal los datos de sum. Condiciones:
-        //  1. sizeof(sum) == sizeof(buffer)
-        //  2. Ambos datos deben ser positivos.
-        void suma(const uint8_t *sum);
-
-        // Resta del decimal los datos de res. Condiciones:
-        //  1. sizeof(res) == sizeof(buffer)
-        //  2. Ambos datos deben ser positivos.
-        //  3. La resta debe dar un resultado positivo.
-        void resta(const uint8_t *res);
-
-        // Obtiene el inverso multiplicativo, tal que i*d = 1.
-        decimal inverse() const;
-};
-
-class bcddec {
-    // Nuevo experimento. Esta vez codificando las cifras en bcd,
-    // y almacenando el número en orden lógico, es decir, la ultima
-    // cifra (la menos significativa) queda almacenada en el la
-    // primera posición del buffer.
-    //
-    // Es probable que este orden facilite las cosas, pero ya veremos.
-
-    public:
-        // Constructores
-        bcddec(unsigned int _c, unsigned int _d);
-        bcddec(const bcddec &d);
-
-        // Destructor
-        ~bcddec();
-
-        // Operadores - Asignación.
-        bcddec &operator=(const bcddec &d);
-        bcddec &operator=(const std::string &val);
-
-        // Operadors - Negación
-        bcddec operator-()
-        {
-            bcddec t(*this);
-
-            if(t.is_negative())
-                t.set_positive();
-            else
-                t.set_negative();
-
-            return t;
-        }
-
-        // Operadores - Suma y Resta.
-        bcddec &operator+=(const bcddec &d);
-        friend bcddec operator+(bcddec a, const bcddec &b)
-        {
-            a += b;
-            return a;
-        }
-        friend bcddec operator+(bcddec a, const std::string &val)
-        {
-            bcddec t(a.ents + a.decs, a.decs);
-            t = val;
-            a += t;
-
-            return a;
-        }
-        friend bcddec operator+(const std::string &val, bcddec a)
-        {
-            return a + val;
-        }
-
-        bcddec &operator-=(const bcddec &d);
-        friend bcddec operator-(bcddec a, const bcddec &b)
-        {
-            a -= b;
-            return a;
-        }
-        friend bcddec operator-(bcddec a, const std::string &val)
-        {
-            bcddec t(a.ents + a.decs, a.decs);
-            t = val;
-            a -= t;
-
-            return a;
-        }
-        friend bcddec operator-(const std::string &val, bcddec a)
-        {
-            bcddec t(a.ents + a.decs, a.decs);
-            t = val;
-            t -= a;
-
-            return t;
-        }
-
-        // Operadores - Multiplicación y división.
-        bcddec &operator*=(const bcddec &d);
-        friend bcddec operator*(bcddec a, const bcddec &b)
-        {
-            a *= b;
-            return a;
-        }
-        friend bcddec operator*(bcddec a, const std::string &val)
-        {
-            bcddec t(a.ents + a.decs, a.decs);
-            t = val;
-            a *= t;
-
-            return a;
-        }
-        friend bcddec operator*(const std::string &val, bcddec a)
-        {
-            bcddec t(a.ents + a.decs, a.decs);
-            t = val;
-            t *= a;
-
-            return t;
-        }
-
-        bcddec &operator/=(const bcddec &d);
-        friend bcddec operator/(bcddec a, const bcddec &b)
-        {
-            a /= b;
-            return a;
-        }
-        friend bcddec operator/(bcddec a, const std::string &val)
-        {
-            bcddec t(a.ents + a.decs, a.decs);
-            t = val;
-            a /= t;
-
-            return a;
-        }
-        friend bcddec operator/(const std::string &val, bcddec a)
-        {
-            bcddec t(a.ents + a.decs, a.decs);
-            t = val;
-            t /= a;
-
-            return t;
-        }
-
-        // Operadores - Comparacion.
-        friend bool operator==(const bcddec &a, const bcddec &b);
-        friend bool operator==(const bcddec &a, const std::string &b);
-        friend bool operator!=(const bcddec &a, const bcddec &b)
-        {
-            return !(a == b);
-        }
-        friend bool operator!=(const bcddec &a, const std::string &b)
-        {
-            return !(a == b);
-        }
-
-        friend bool operator>=(const bcddec &a, const bcddec &b);
-        friend bool operator<=(const bcddec &a, const bcddec &b);
-
-        friend bool operator>(const bcddec &a, const bcddec &b)
-        {
-            return !(a <= b);
-        }
-
-        friend bool operator<(const bcddec &a, const bcddec &b)
-        {
-            return !(a >= b);
-        }
-
-        friend std::ostream &operator << (std::ostream &os, const bcddec &d)
-        {
-            os << d.to_str();
-
-            return os;
-        }
-
-        // Cambia el tamaño del bcddec, redondeando si es necesario
-        // o lanzando excepción si se produce desbordamiento.
-        void resize(unsigned int _c, unsigned int _d);
-
-        // Devuelve el bcddec como cadena de caracteres.
-        // Por defecto le dara un formato para mostrar por pantalla,
-        // eliminado 0 por la izquerda y acomodando bcddeces y signo.
-        // Para obtener la representacion interna format = false.
-        std::string to_str(bool format = true) const;
-
-        // Devuelve un bcddec con el valor absoluto de v.
-        bcddec abs() const;
-
-        // Devuelve un bcddec con el valor maximo que puede tener v.
-        bcddec max() const;
-
-        // Devuelve un bcddec con el valor minimo que puede tener v.
-        bcddec min() const;
-
-        // Devuelve un bcddec de iguales caracteristicas que v, pero con valor 0.
-        bcddec zero() const;
-
-    private:
-        uint8_t *buffer;
-
-        unsigned int ents;          // Total enteros del número.
         unsigned int decs;          // Total racionales del número.
         unsigned int cifs;          // Total cifras del número.
 
@@ -460,20 +250,19 @@ class bcddec {
             return (status & 0x02); // 0000 0010
         }
 
-        // Suma al bcddec los datos de sum. Condiciones:
+        // Suma al decimal los datos de sum. Condiciones:
         //  1. sizeof(sum.buffer) == sizeof(this->buffer)
         //  2. Ambos datos deben ser positivos.
-        // Devuelve true su la suma de las cifras más significativas ha producido acarreo.
-        void suma(const bcddec &sum);
+        void suma(const decimal &sum);
 
-        // Resta del bcddec los datos de res. Condiciones:
-        //  1. sizeof(sum.buffer) == sizeof(this->buffer)
+        // Resta del decimal los datos de res. Condiciones:
+        //  1. sizeof(res.buffer) == sizeof(this->buffer)
         //  2. Ambos datos deben ser positivos.
         //  3. La resta debe dar un resultado positivo.
-        void resta(const bcddec &res);
+        void resta(const decimal &res);
 
         // Obtiene el inverso multiplicativo, tal que i*d = 1.
-        bcddec inverse() const;
+        decimal inverse() const;
 
         // Devuelve un digito codificado en BCD, en el nybble alto
         // si high = true, en el bajo de lo contrario.
@@ -486,7 +275,7 @@ class bcddec {
         char bcd_to_char(uint8_t cifra, bool high) const;
 
         // Devuelve el valor de la cifra en la posicion indicada. La primera
-        // posicion será la 0, y la última ents + decs - 1.
+        // posicion será la 0, y la última cifs - 1.
         // Siempre devuelve el valor en el nybble bajo.
         uint8_t get_cifra(unsigned int pos) const;
 
