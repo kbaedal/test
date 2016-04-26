@@ -13,7 +13,7 @@ namespace fpt {
 
 decimal::decimal(unsigned int _c, unsigned int _d) :  ents(_c - _d), decs(_d), cifs(_c)
 {
-    if(cifs < 1)
+    if((cifs < 1) || decs < cifs))
         throw std::out_of_range("Numero de cifras incorrecto.");
 
     // Estado del decimal, por defecto todos los flags a 0.
