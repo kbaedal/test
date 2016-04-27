@@ -188,6 +188,17 @@ class decimal {
         // Cambia el tamaño del decimal, redondeando si es necesario
         // o lanzando excepción si se produce desbordamiento.
         void resize(unsigned int _c, unsigned int _d);
+        void resize(const decimal &d)
+        {
+            this->resize(d.cifs, d.decs);
+        }
+
+        // Reconstruye el decimal con los datos de d.
+        void rebuild(const decimal &d)
+        {
+            this->resize(d);
+            *this = d;
+        }
 
         // Devuelve el decimal como cadena de caracteres.
         // Por defecto le dara un formato para mostrar por pantalla,
@@ -220,15 +231,18 @@ class decimal {
                                     // Bit 0: Signo (0 positivo, 1 negativo).
                                     // Bit 1: Overflow (0 no hay, 1 sí hay).
 
-        // Comprueba que str contenga un numero válido, ignorando espacios y otros
-        // caracteres especiales tanto al principio como al final. Devuelve la
-        // cadena sin estos caracteres en t.
+        // Comprueba que str contenga un numero válido, ignorando espacios
+        // y otros caracteres especiales tanto al principio como al final.
+        // Si es un número válido, devuelve true y la cadena limpia, sin los
+        // caracteres especiales, en t.
         bool validar_cadena(const std::string &str, std::string &t);
-        void convertir(const std::string &str); // Convierte el número a formato interno.
 
-        std::string int_to_s(const int &n, int width = 0) const;
+        // Convierte el número a formato interno.
+        void convertir(const std::string &str);
 
-        int s_to_int(const std::string &s) const;
+        std::string int_to_str(const int &n, int width = 0) const;
+
+        int str_to_int(const std::string &s) const;
 
         bool is_negative() const
         {
@@ -261,30 +275,26 @@ class decimal {
         //  3. La resta debe dar un resultado positivo.
         void resta(const decimal &res);
 
-        // Obtiene el inverso multiplicativo, tal que i*d = 1.
+        // Obtiene el inverso multiplicativo, tal que inverse(d)*d = 1.
         decimal inverse() const;
 
-        // Devuelve un digito codificado en BCD, en el nybble alto
-        // si high = true, en el bajo de lo contrario.
+        // Devuelve un digito codificado en pbcd.
+        // Si high = true en el nybble alto, en el bajo si false.
         // En caso de que la cifra no se pueda convertir, devuelve 0xFF.
-        uint8_t char_to_bcd(char cifra, bool high) const;
+        uint8_t char_to_pbcd(char cifra, bool high) const;
 
         // Devuelve un caracter que corresponde al dígito almacenado
-        // en bcd. Si high = true decodifica el nybble alto, el bajo
+        // en pbcd. Si high = true decodifica el nybble alto, el bajo
         // en caso contrario.
-        char bcd_to_char(uint8_t cifra, bool high) const;
+        char pbcd_to_char(uint8_t cifra, bool high) const;
 
         // Devuelve el valor de la cifra en la posicion indicada. La primera
         // posicion será la 0, y la última cifs - 1.
         // Siempre devuelve el valor en el nybble bajo.
         uint8_t get_cifra(unsigned int pos) const;
 
-        // Coloca el valor de la cifra en la posicion indicada.
+        // Coloca el valor del nybble bajo de val en la posicion indicada.
         void set_cifra(uint8_t val, unsigned int pos);
-
-        void print_buffer(std::string encab = "") const;
-
-        void print_bcd(uint8_t val, char sep = ' ') const;
 };
 
 }; // Namespace fpt

@@ -13,7 +13,7 @@ namespace fpt {
 
 decimal::decimal(unsigned int _c, unsigned int _d) :  ents(_c - _d), decs(_d), cifs(_c)
 {
-    if((cifs < 1) || decs < cifs))
+    if((cifs < 1) || (cifs < decs))
         throw std::out_of_range("Numero de cifras incorrecto.");
 
     // Estado del decimal, por defecto todos los flags a 0.
@@ -150,7 +150,7 @@ decimal &decimal::operator+=(const decimal &d)
     }
 
     // Comprobamos que no nos hayamos salido de rango.
-    if(this->get_cifra(cifs-1) > 9)
+    if(this->get_cifra(cifs - 1) > 9)
         throw std::out_of_range("La suma ha producido desbordamiento.");
 
     return *this;
@@ -233,11 +233,12 @@ void decimal::suma(const decimal &sum)
 {
     // Por cada cifra del decimal, empezando por el final:
     //  1. Sumamos ambos numeros.
-    //  2. Si la suma pasa de 10 acarreamos para el siguiente par y restamos 10 a este par.
+    //  2. Si la suma pasa de 10 acarreamos para la siguiente cifra, y restamos
+    //      10 a la cifra actual.
 
     bool acarreo = false;
 
-    for(int i = 0; i < cifs; ++i) {
+    for(unsigned int i = 0; i < cifs; ++i) {
         uint8_t op1 = this->get_cifra(i);
         uint8_t op2 = sum.get_cifra(i);
         uint8_t op3 = op1 + op2;
@@ -268,7 +269,7 @@ void decimal::resta(const decimal &res)
 
     bool acarreo = false;
 
-    for(int i = 0; i < cifs; ++i) {
+    for(unsigned int i = 0; i < cifs; ++i) {
         uint8_t op1 = this->get_cifra(i);
         uint8_t op2 = res.get_cifra(i);
 
@@ -302,7 +303,7 @@ decimal &decimal::operator*=(const decimal &d)
     uint8_t res     = 0,
             acarreo = 0;
 
-    decimal  mtdr(d),                    // Multiplicador, para poder cambiar tamaño.
+    decimal mtdr(d),                    // Multiplicador, para poder cambiar tamaño.
             t1(2 * cifs, 2 * decs),     // Temporal donde colocaremos las multiplicaciones parciales.
             t2(2 * cifs, 2 * decs);     // Acumulador. Sumamos aquí las multiplicaciones.
 
@@ -310,10 +311,10 @@ decimal &decimal::operator*=(const decimal &d)
 
     mtdr.resize(cifs, decs);
 
-    for(int i = 0; i < cifs; ++i) {     // Por cada cifra del multiplicando
+    for(unsigned int i = 0; i < cifs; ++i) {     // Por cada cifra del multiplicando
         t1 = "0";
         if(this->get_cifra(i) != 0) {
-            for(int j = 0; j < cifs; ++j) { // Multiplicamos por cada cifra del multiplicador
+            for(unsigned int j = 0; j < cifs; ++j) { // Multiplicamos por cada cifra del multiplicador
                 res = this->get_cifra(i) * mtdr.get_cifra(j);
 
                 res += acarreo;
@@ -386,17 +387,16 @@ decimal decimal::inverse() const
     //              x = r;
     //      }
     //
-    unsigned int    te = ents,
-                    td = decs,
+    unsigned int    td = decs,
                     tc = cifs;
 
-    int             i = 2;  // Veces que aumentaremos racionales para mejorar la
-                            // precision. Equivale a añadir 4 decimales para mejorar
-                            // el cálculo. A partir de aquí, las pérdidas de precision
-                            // las consideramos insignificantes, aumentar decimales
-                            // no va a producir un resultado mejor.
+    int             i = 2;  // Veces que aumentaremos cifras racionales para mejorar la
+                            // precision. Equivale a añadir 4 cifras racionales para mejorar
+                            // el cálculo. A partir de aquí, las pérdidas de precision las
+                            // consideramos insignificantes, aumentar cifras no va a producir
+                            // un resultado mejor.
 
-    decimal  p(tc, td),  // Precision deseada.
+    decimal p(tc, td),  // Precision deseada.
             x(tc, td),  // Resultado.
             r(tc, td),  // Variable para controlar el resultado.
             c(tc, td);  // Almacenamos el contenido actual del decimal.
@@ -410,6 +410,7 @@ decimal decimal::inverse() const
     // Y la variable de control a 0.
     r = r.zero();
 
+    // Contenido actual, para poder comprobar.
     c = *this;
 
     // Aplicamos Newton-Raphson, y repetimos hasta i veces para mejorar la precision.
@@ -439,7 +440,10 @@ decimal decimal::inverse() const
             p = p.min();
 
             x.resize(tc, td);
+            x = p;
+
             r.resize(tc, td);
+
             c.resize(tc, td);
         }
     }
@@ -449,7 +453,7 @@ decimal decimal::inverse() const
 
 decimal &decimal::operator/=(const decimal &d)
 {
-    // Utilizaremos un decimal con el  doble de tamaño del original
+    // Utilizaremos un decimal con el  doble de cifras racionales
     // para asegurar la precisión del cáculo.
     // No dividimos, calculamos el inverso multiplicativo de d,
     // y lo multiplicamos por el decimal.
@@ -458,23 +462,26 @@ decimal &decimal::operator/=(const decimal &d)
         throw std::invalid_argument("Division entre 0.");
     }
     else {
-        int ne  = (ents != 0) ? ents * 2 : 2;
+        int ne  = ents;
         int nd  = (decs != 0) ? decs * 2 : 2;
         int nc  = ne + nd;
 
         decimal r(nc, nd),
-               n(nc, nd);
+                n(nc, nd);
 
         bool res_negativo = (this->is_negative() != d.is_negative());
 
-        n = *this;
+        // Copiamos los datos en los temporales con el nuevo tamaño.
         r = d;
+        n = *this;
 
-        n.set_positive();
-        r.set_positive();
+        // Calculamos la inversa multiplicativa, y reconstruimos el
+        // resultado para que tenga la precision adecuada.
+        r.rebuild(r.inverse());
 
-        r = r.inverse();
-
+        // Cambiamos el tamaño del numerador para que la multiplicacion
+        // sea correcta, y no perdamos precision al redondear.
+        n.resize(r);
         *this = n * r;
 
         if(res_negativo)
@@ -497,6 +504,9 @@ void decimal::resize(unsigned int nc, unsigned int nd)
         throw std::invalid_argument("Numero de decimales incompatible con numero de cifras.");
 
     unsigned int    ne  = nc - nd;  // Nuevo numero de enteros.
+
+    //std::cout << "Resize (" << int_to_str(cifs) << ", " << int_to_str(decs) << ") -> (" << int_to_str(nc) << ", " << int_to_str(nd) << ")\n";
+    //std::cout << "\t" << this->to_str(false) << "\n";
 
     // Comprobamos que realmente haya que cambiar el tamaño.
     if((ne != ents) || (nd != decs)) {
@@ -535,10 +545,8 @@ void decimal::resize(unsigned int nc, unsigned int nd)
             // Si se ha producido acarreo, lo añadimos a la hora de copiar el
             // contenido del viejo tamaño al nuevo tamaño.
             for(unsigned int k = 0, l = decs - nd; k < nc; ++k, ++l) {
-                uint8_t x = 0;
-
-                if(l < cifs)
-                    x = this->get_cifra(l);
+                // Si todavía nos quedan cifras en el original, la obtenemos.
+                uint8_t x = (l < cifs) ? this->get_cifra(l) : 0;
 
                 if(acarreo)
                     ++x;
@@ -585,21 +593,22 @@ void decimal::convertir(const std::string &str)
     // cambiamos el tamaño para acomodarlo a las características
     // del decimal y asignamos.
 
-    std::string t = str;
+    std::string t   = str;
     bool        neg = false;
+
     size_t      pos_punto;
+
     uint8_t     lonybble, hinybble;
-    int         ne = 0,
-                nd = 0,
-                i = 0;
+
+    int         ne  = 0,
+                nd  = 0,
+                i   = 0;
 
     // Comprobamos el signo.
     if(t[0] == '-') {
         neg = true;
         t.erase(0, 1);
     }
-    else
-        neg = false;
 
     // Buscamos el punto.
     pos_punto = t.find_first_of('.');
@@ -618,14 +627,14 @@ void decimal::convertir(const std::string &str)
     }
 
     // Creamos un decimal temporal con estos datos.
-    decimal x(ne+nd, nd);
+    decimal x(ne + nd, nd);
 
     // Sacamos los caracteres de la cadena por pares, los traducimos
     // a bcd, y los colocamos en su sitio.
     while(t.size() > 1) { // Mientras que tengamos al menos 2 caracteres.
-        lonybble = char_to_bcd(t.back(), false);
+        lonybble = char_to_pbcd(t.back(), false);
         t.pop_back();
-        hinybble = char_to_bcd(t.back(), true);
+        hinybble = char_to_pbcd(t.back(), true);
         t.pop_back();
 
         x.buffer[i] = hinybble | lonybble;
@@ -634,8 +643,8 @@ void decimal::convertir(const std::string &str)
     }
 
     if(t.size() != 0) {
-        // El último número de la cadena.
-        lonybble = char_to_bcd(t.back(), false);
+        // Nos queda el último número de la cadena, ya que las cifras eran impares.
+        lonybble = char_to_pbcd(t.back(), false);
         t.pop_back();
         hinybble = 0xFF;
 
@@ -692,7 +701,7 @@ std::string decimal::to_str(bool format) const
         if(i == decs && decs != 0)
             t.insert(0, 1, '.');
 
-        t.insert(0, 1, bcd_to_char(this->get_cifra(i), false));
+        t.insert(0, 1, pbcd_to_char(this->get_cifra(i), false));
     }
 
     // Para formatear el numero, eliminamos los 0 a las izquiera.
@@ -842,7 +851,7 @@ decimal decimal::zero() const
     return t;
 }
 
-std::string decimal::int_to_s(const int &n, int width) const
+std::string decimal::int_to_str(const int &n, int width) const
 {
     std::stringstream ss;
 
@@ -854,7 +863,7 @@ std::string decimal::int_to_s(const int &n, int width) const
     return ss.str();
 }
 
-int decimal::s_to_int(const std::string &s) const
+int decimal::str_to_int(const std::string &s) const
 {
     int res;
 
@@ -865,7 +874,7 @@ int decimal::s_to_int(const std::string &s) const
     return res;
 }
 
-uint8_t decimal::char_to_bcd(char cifra, bool high) const
+uint8_t decimal::char_to_pbcd(char cifra, bool high) const
 {
     int shift = high ? 4 : 0;
 
@@ -884,7 +893,7 @@ uint8_t decimal::char_to_bcd(char cifra, bool high) const
     }
 }
 
-char decimal::bcd_to_char(uint8_t cifra, bool high) const
+char decimal::pbcd_to_char(uint8_t cifra, bool high) const
 {
     // Si es necesario, desplazamos los bits.
     cifra = high ? cifra >> 4 : cifra;
@@ -927,7 +936,7 @@ uint8_t decimal::get_cifra(unsigned int pos) const
 void decimal::set_cifra(uint8_t val, unsigned int pos)
 {
     if(pos >= cifs) {
-        std::string exc_msg = "Imposible colocar la cifra. (val, pos): " + int_to_s(val) + ", " + int_to_s(pos);
+        std::string exc_msg = "Imposible colocar la cifra. (val, pos): " + int_to_str(val) + ", " + int_to_str(pos);
 
         throw std::out_of_range(exc_msg);
     }
@@ -944,24 +953,6 @@ void decimal::set_cifra(uint8_t val, unsigned int pos)
         buffer[pos/2] &= 0xF0;      // Limpiamos posicion.
         buffer[pos/2] |= val;       // Colocamos la cifra.
     }
-}
-
-void decimal::print_buffer(std::string encab) const
-{
-    std::cout << encab << "Buffer[ ";
-    for(int i = long_buffer - 1; i >= 0; --i) {
-        print_bcd(this->buffer[i], '-');
-        std::cout  << " ";
-    }
-
-    std::cout << "]\n";
-}
-
-void decimal::print_bcd(uint8_t val, char sep) const
-{
-    std::bitset<8> x(val);
-
-    std::cout << x.to_string().substr(0, 4) << sep << x.to_string().substr(4, 4);
 }
 
 }; // namespace fpt
