@@ -11,7 +11,7 @@
 
 namespace fpt {
 
-decimal::decimal(unsigned int _c, unsigned int _d) :  ents(_c - _d), decs(_d), cifs(_c)
+decimal::decimal(unsigned int nc, unsigned int nd) :  ents(nc - nd), decs(nd), cifs(nc)
 {
     if((cifs < 1) || (cifs < decs))
         throw std::out_of_range("Numero de cifras incorrecto.");
@@ -715,6 +715,47 @@ std::string decimal::to_str(bool format) const
 
     if(this->is_negative())
         t.insert(0, 1, '-');
+
+    return t;
+}
+
+std::string decimal::to_smoney(std::string suffix) const
+{
+    std::string t = this->to_str();
+
+    // Para la parte entera, por cada tres cifras añadimos una coma,
+    // para mejorar la legibilidad.
+    size_t point_pos = t.find_first_of('.');
+
+    if(point_pos > 3) {
+        int j = 0;
+        for(int i = point_pos; i > 0; --i) {
+            if(j == 3) {
+                t.insert(i, 1, ',');
+                j = 0;
+            }
+            else {
+                ++j;
+            }
+        }
+    }
+
+    t += suffix;
+
+    return t;
+}
+
+std::string decimal::to_splain() const
+{
+    std::string t = this->to_str();
+
+    if(t[0] == '-')
+        t.erase(0, 1);
+
+    size_t point_pos = t.find_first_of('.');
+
+    if(point_pos != std::string::npos)
+        t.erase(point_pos, 1);
 
     return t;
 }

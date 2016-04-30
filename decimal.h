@@ -1,3 +1,20 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  Project:    Fixed point type and arithmetics.
+//  File:       decimal.h
+//  Author:     Alfonso Vicente Zurdo (kbaedal at gmail dot com)
+//  Date:       2016-04-28
+//  Version:    1.0
+//  Brief:      Simple fixed point type and arithmetics, to cope with
+//              light problems, like basic economic operations, and other
+//              type of situations where a floating point arithmetics
+//              can lead to an unacepptable loss of precission.
+//              This is not intended to be included in a complex system where
+//              calculations needs to be quick and extremely precisse. There
+//              are better solutions for that kind of scenario (see GMP library).
+//
+////////////////////////////////////////////////////////////////////////////////
+
 #ifndef DECIMAL_H_INCLUDED
 #define DECIMAL_H_INCLUDED
 
@@ -5,40 +22,22 @@
 #include <string>
 #include <iostream>
 
-// El plan es tener un tipo de dato decimal, similar al que se
-// utiliza en algunas bases de datos para almacenar numeros
-// con decimales de forma precisa, sin los problemas de
-// exactitud de los tipos de coma flotante que ofrece C/C++.
-// Ni puta idea de por donde engancharlo, pero y iremos
-// viendo.
-
-// Vale, declaramos como decimal numero(12,4), que viene a
-// significar que queremos un numero de 12 cifras en total,
-// de las cuales 4 son la parte decimal: EEEEEEEE.DDDD
-
 namespace fpt {
 
 class decimal {
-    // Nuevo experimento. Esta vez codificando las cifras en bcd,
-    // y almacenando el número en orden lógico, es decir, la ultima
-    // cifra (la menos significativa) queda almacenada en el la
-    // primera posición del buffer.
-    //
-    // Es probable que este orden facilite las cosas, pero ya veremos.
-
     public:
-        // Constructores
-        decimal(unsigned int _c, unsigned int _d);
+        // Constructors
+        decimal(unsigned int nc, unsigned int nd);
         decimal(const decimal &d);
 
         // Destructor
         ~decimal();
 
-        // Operadores - Asignación.
+        // Operators - Asignation.
         decimal &operator=(const decimal &d);
         decimal &operator=(const std::string &val);
 
-        // Operador: Negación.
+        // Operators: Negation (unary minus).
         decimal operator-()
         {
             decimal t(*this);
@@ -51,7 +50,7 @@ class decimal {
             return t;
         }
 
-        // Operador: + unario.
+        // Operador: Unary plus.
         decimal operator+()
         {
             decimal t(*this);
@@ -59,7 +58,7 @@ class decimal {
             return t;
         }
 
-        // Operadores - Suma y Resta.
+        // Operators - Add and sustract.
         decimal &operator+=(const decimal &d);
         friend decimal operator+(decimal a, const decimal &b)
         {
@@ -104,7 +103,7 @@ class decimal {
             return t;
         }
 
-        // Operadores - Multiplicación y división.
+        // Operators - Multiplication and division.
         decimal &operator*=(const decimal &d);
         friend decimal operator*(decimal a, const decimal &b)
         {
@@ -153,7 +152,7 @@ class decimal {
             return t;
         }
 
-        // Operadores - Comparacion.
+        // Operators - Comparision.
         friend bool operator==(const decimal &a, const decimal &b);
         friend bool operator==(const decimal &a, const std::string &b);
         friend bool operator!=(const decimal &a, const decimal &b)
@@ -185,41 +184,46 @@ class decimal {
             return os;
         }
 
-        // Cambia el tamaño del decimal, redondeando si es necesario
-        // o lanzando excepción si se produce desbordamiento.
-        void resize(unsigned int _c, unsigned int _d);
+        // Changes decimal size, applying rounding if needed.
+        // Throws an exception on overflow.
+        void resize(unsigned int nc, unsigned int nd);
         void resize(const decimal &d)
         {
             this->resize(d.cifs, d.decs);
         }
 
-        // Reconstruye el decimal con los datos de d.
+        // Rebuilds decimal structure and data from d.
         void rebuild(const decimal &d)
         {
             this->resize(d);
             *this = d;
         }
 
-        // Devuelve el decimal como cadena de caracteres.
-        // Por defecto le dara un formato para mostrar por pantalla,
-        // eliminado 0 por la izquerda y acomodando decimales y signo.
-        // Para obtener la representacion interna format = false.
+        // Formats the decimal as a string.
+        // With format = false, it shows all cyphers, even non-significant zeros.
         std::string to_str(bool format = true) const;
 
-        // Devuelve un decimal con el valor absoluto de v.
+        // Formats the decimal as a string with economics look, adding decimal point
+        // and separator comas in every place needed.
+        std::string to_smoney(std::string suffix = " EUR" ) const;
+
+        // Formats the decimal as a string without decimal point or negative sign.
+        std::string to_splain() const;
+
+        // Returns absoulte value.
         decimal abs() const;
 
-        // Devuelve un decimal con el valor maximo que puede tener v.
+        // Returns maximum positive value.
         decimal max() const;
 
-        // Devuelve un decimal con el valor minimo que puede tener v.
+        // Returns minimum positive value.
         decimal min() const;
 
-        // Devuelve un decimal de iguales caracteristicas que v, pero con valor 0.
+        // Returns a 0 filled decimal.
         decimal zero() const;
 
     private:
-        uint8_t *buffer;
+        uint8_t *buffer;            // PBCD data storage.
 
         unsigned int ents;          // Total enteros del número.
         unsigned int decs;          // Total racionales del número.
