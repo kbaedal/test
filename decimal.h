@@ -25,6 +25,20 @@
 
 namespace fpt {
 
+template <typename T>
+std::string to_string(T const &val)
+{
+    std::stringstream temp;
+    temp << val;
+    return temp.str();
+}
+
+// Comprueba que str contenga un numero válido, ignorando espacios
+// y otros caracteres especiales tanto al principio como al final.
+// Si es un número válido, devuelve true y la cadena limpia, sin los
+// caracteres especiales, en t.
+bool valid_number(const std::string &str, std::string &t);
+
 class decimal {
     public:
         // Constructors
@@ -36,9 +50,9 @@ class decimal {
 
         // Operators - Asignation.
         decimal &operator=(const decimal &d);
-        decimal &operator=(const std::string &val);
-        decimal &operator=(const int &val);
-        decimal &operator=(const double &val);
+        decimal &operator=(const std::string &d);
+        decimal &operator=(const int &d);
+        decimal &operator=(const double &d);
 
         // Operators: Negation (unary minus).
         decimal operator-()
@@ -56,30 +70,68 @@ class decimal {
         // Operador: Unary plus.
         decimal operator+()
         {
-            decimal t(*this);
-
-            return t;
+            return (*this);
         }
 
-        // Operators - Add and sustract.
+        // Operators - Add and substract.
         decimal &operator+=(const decimal &d);
+        decimal &operator+=(const int &d)
+        {
+            decimal t(cifs, decs);
+            t = fpt::to_string(d);
+
+            *this += t;
+
+            return *this;
+        }
+        decimal &operator+=(const double &d)
+        {
+            decimal t(cifs, decs);
+            t = fpt::to_string(d);
+
+            *this += t;
+
+            return *this;
+        }
         friend decimal operator+(decimal a, const decimal &b)
         {
             a += b;
 
             return a;
         }
-        friend decimal operator+(decimal a, const std::string &val)
+        friend decimal operator+(decimal a, const std::string &b)
         {
             decimal t(a.cifs, a.decs);
-            t = val;
+            t = b;
             a += t;
 
             return a;
         }
-        friend decimal operator+(const std::string &val, decimal a)
+        friend decimal operator+(const std::string &a, decimal b)
         {
-            return a + val;
+            return (b + a);
+        }
+        friend decimal operator+(decimal a, const int &b)
+        {
+            decimal t(a.cifs, a.decs);
+            t = fpt::to_string(b);
+
+            return a + t;
+        }
+        friend decimal operator+(const int &a, decimal b)
+        {
+            return (b + a);
+        }
+        friend decimal operator+(decimal a, const double &b)
+        {
+            decimal t(a.cifs, a.decs);
+            t = fpt::to_string(b);
+
+            return a + t;
+        }
+        friend decimal operator+(const double &a, decimal b)
+        {
+            return (b + a);
         }
 
         decimal &operator-=(const decimal &d);
@@ -89,21 +141,43 @@ class decimal {
 
             return a;
         }
-        friend decimal operator-(decimal a, const std::string &val)
+        friend decimal operator-(decimal a, const std::string &b)
         {
             decimal t(a.cifs, a.decs);
-            t = val;
+            t = b;
             a -= t;
 
             return a;
         }
-        friend decimal operator-(const std::string &val, decimal a)
+        friend decimal operator-(const std::string &a, decimal b)
         {
-            decimal t(a.cifs, a.decs);
-            t = val;
-            t -= a;
+            decimal t(b.cifs, b.decs);
+            t = a;
+            t -= b;
 
             return t;
+        }
+        friend decimal operator-(decimal a, const int &b)
+        {
+            decimal t(a.cifs, a.decs);
+            t = fpt::to_string(b);
+
+            return a - t;
+        }
+        friend decimal operator-(const int &a, decimal b)
+        {
+            return (-b + a);
+        }
+        friend decimal operator-(decimal a, const double &b)
+        {
+            decimal t(a.cifs, a.decs);
+            t = fpt::to_string(b);
+
+            return (a - t);
+        }
+        friend decimal operator-(const double &a, decimal b)
+        {
+            return (-b + a);
         }
 
         // Operators - Multiplication and division.
@@ -114,21 +188,39 @@ class decimal {
 
             return a;
         }
-        friend decimal operator*(decimal a, const std::string &val)
+        friend decimal operator*(decimal a, const std::string &b)
         {
             decimal t(a.cifs, a.decs);
-            t = val;
+            t = b;
             a *= t;
 
             return a;
         }
-        friend decimal operator*(const std::string &val, decimal a)
+        friend decimal operator*(const std::string &a, decimal b)
+        {
+            return (b * a);
+        }
+        friend decimal operator*(decimal a, const int &b)
         {
             decimal t(a.cifs, a.decs);
-            t = val;
-            t *= a;
+            t = fpt::to_string(b);
 
-            return t;
+            return a * t;
+        }
+        friend decimal operator*(const int &a, decimal b)
+        {
+            return (b * a);
+        }
+        friend decimal operator*(decimal a, const double &b)
+        {
+            decimal t(a.cifs, a.decs);
+            t = fpt::to_string(b);
+
+            return a * t;
+        }
+        friend decimal operator*(const double &a, decimal b)
+        {
+            return (b * a);
         }
 
         decimal &operator/=(const decimal &d);
@@ -138,26 +230,55 @@ class decimal {
 
             return a;
         }
-        friend decimal operator/(decimal a, const std::string &val)
+        friend decimal operator/(decimal a, const std::string &b)
         {
-            decimal t(a.ents + a.decs, a.decs);
-            t = val;
-            a /= t;
+            decimal t(a.cifs, a.decs);
+            t = b;
 
-            return a;
+            return (a / t);
         }
-        friend decimal operator/(const std::string &val, decimal a)
+        friend decimal operator/(const std::string &a, decimal b)
         {
-            decimal t(a.ents + a.decs, a.decs);
-            t = val;
-            t /= a;
+            decimal t(b.cifs, b.decs);
+            t = a;
 
-            return t;
+            return (t / b);
+        }
+        friend decimal operator/(decimal a, const int &b)
+        {
+            decimal t(a.cifs, a.decs);
+            t = fpt::to_string(b);
+
+            return (a / t);
+        }
+        friend decimal operator/(const int &a, decimal b)
+        {
+            decimal t(b.cifs, b.decs);
+            t = fpt::to_string(a);
+
+            return (t / a);
+        }
+        friend decimal operator/(decimal a, const double &b)
+        {
+            decimal t(a.cifs, a.decs);
+            t = fpt::to_string(b);
+
+            return (a / t);
+        }
+        friend decimal operator/(const double &a, decimal b)
+        {
+            decimal t(b.cifs, b.decs);
+            t = fpt::to_string(a);
+
+            return (t / a);
         }
 
         // Operators - Comparision.
         friend bool operator==(const decimal &a, const decimal &b);
         friend bool operator==(const decimal &a, const std::string &b);
+        friend bool operator==(const decimal &a, const int &b);
+        friend bool operator==(const decimal &a, const double &b);
+
         friend bool operator!=(const decimal &a, const decimal &b)
         {
             return !(a == b);
@@ -166,11 +287,31 @@ class decimal {
         {
             return !(a == b);
         }
+        friend bool operator!=(const decimal &a, const int &b)
+        {
+            return !(a == b);
+        }
+        friend bool operator!=(const decimal &a, const double &b)
+        {
+            return !(a == b);
+        }
 
         friend bool operator>=(const decimal &a, const decimal &b);
+        friend bool operator>=(const decimal &a, const int &b);
+        friend bool operator>=(const decimal &a, const double &b);
         friend bool operator<=(const decimal &a, const decimal &b);
+        friend bool operator<=(const decimal &a, const int &b);
+        friend bool operator<=(const decimal &a, const double &b);
 
         friend bool operator>(const decimal &a, const decimal &b)
+        {
+            return !(a <= b);
+        }
+        friend bool operator>(const decimal &a, const int &b)
+        {
+            return !(a <= b);
+        }
+        friend bool operator>(const decimal &a, const double &b)
         {
             return !(a <= b);
         }
@@ -179,6 +320,15 @@ class decimal {
         {
             return !(a >= b);
         }
+        friend bool operator<(const decimal &a, const int &b)
+        {
+            return !(a >= b);
+        }
+        friend bool operator<(const decimal &a, const double &b)
+        {
+            return !(a >= b);
+        }
+
 
         friend std::ostream &operator << (std::ostream &os, const decimal &d)
         {
@@ -238,26 +388,8 @@ class decimal {
                                     // Bit 0: Signo (0 positivo, 1 negativo).
                                     // Bit 1: Overflow (0 no hay, 1 sí hay).
 
-        // Comprueba que str contenga un numero válido, ignorando espacios
-        // y otros caracteres especiales tanto al principio como al final.
-        // Si es un número válido, devuelve true y la cadena limpia, sin los
-        // caracteres especiales, en t.
-        bool validar_cadena(const std::string &str, std::string &t);
-
         // Convierte el número a formato interno.
         void convertir(const std::string &str);
-
-        std::string int_to_str(const int &n, int width = 0) const;
-
-        template <typename T>
-        std::string to_string(T const &val)
-        {
-            std::stringstream temp;
-            temp << val;
-            return temp.str();
-        }
-
-        int str_to_int(const std::string &s) const;
 
         bool is_negative() const
         {

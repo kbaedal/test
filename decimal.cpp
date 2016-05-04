@@ -76,7 +76,7 @@ decimal &decimal::operator=(const std::string &val)
     // excepción si el nuevo contenido no cabe en el decimal.
     std::string tv = val;
 
-    if(validar_cadena(tv, tv))
+    if(fpt::valid_number(tv, tv))
         convertir(tv);
     else
         throw std::invalid_argument("La cadena no contiene un numero valido.");
@@ -86,7 +86,7 @@ decimal &decimal::operator=(const std::string &val)
 
 decimal &decimal::operator=(const int &val)
 {
-    std::string temp = to_string(val);
+    std::string temp = fpt::to_string(val);
 
     convertir(temp);
 
@@ -95,7 +95,7 @@ decimal &decimal::operator=(const int &val)
 
 decimal &decimal::operator=(const double &val)
 {
-    std::string temp = to_string(val);
+    std::string temp = fpt::to_string(val);
 
     convertir(temp);
 
@@ -433,8 +433,8 @@ decimal decimal::inverse() const
 
     // Aplicamos Newton-Raphson, y repetimos hasta i veces para mejorar la precision.
     while(--i) {
-        while((x * c) > ("1.0" + p) || (x * c) < ("1.0" - p)) {
-            r = x * ("2.0" - c * x);
+        while((x * c) > (1.0 + p) || (x * c) < (1.0 - p)) {
+            r = x * (2.0 - c * x);
 
             // Comprobamos si hemos alcanzado el valor más próximo posible
             // a la solución correcta. Para obtener un resultado más preciso
@@ -448,7 +448,7 @@ decimal decimal::inverse() const
 
         // Puede ser que al redondear no obtengamos el mejor resultado posible,
         // así que aumentamos dos cifras decimales y repetimos el cálculo.
-        if((x * c) == "1.0")
+        if((x * c) == 1.0)
             break;
         else {
             tc += 2;
@@ -476,7 +476,7 @@ decimal &decimal::operator/=(const decimal &d)
     // No dividimos, calculamos el inverso multiplicativo de d,
     // y lo multiplicamos por el decimal.
 
-    if(d.abs() == d.zero()) {
+    if(d.abs() == 0.0) {
         throw std::invalid_argument("Division entre 0.");
     }
     else {
@@ -525,9 +525,6 @@ void decimal::resize(unsigned int nc, unsigned int nd)
         throw std::invalid_argument("Numero de decimales incompatible con numero de cifras.");
 
     unsigned int    ne  = nc - nd;  // Nuevo numero de enteros.
-
-    //std::cout << "Resize (" << int_to_str(cifs) << ", " << int_to_str(decs) << ") -> (" << int_to_str(nc) << ", " << int_to_str(nd) << ")\n";
-    //std::cout << "\t" << this->to_str(false) << "\n";
 
     // Comprobamos que realmente haya que cambiar el tamaño.
     if((ne != ents) || (nd != decs)) {
@@ -682,7 +679,7 @@ void decimal::convertir(const std::string &str)
         this->set_positive();
 }
 
-bool decimal::validar_cadena(const std::string &str, std::string &t)
+bool valid_number(const std::string &str, std::string &t)
 {
     const char  *ws = " \t\n\r\f\v"; // Caracteres a eliminar.
 
@@ -808,6 +805,24 @@ bool operator==(const decimal &a, const std::string &b)
     return a == t;
 }
 
+bool operator==(const decimal &a, const int &b)
+{
+    decimal t(a.cifs, a.decs);
+
+    t = fpt::to_string(b);
+
+    return a == t;
+}
+
+bool operator==(const decimal &a, const double &b)
+{
+    decimal t(a.cifs, a.decs);
+
+    t = fpt::to_string(b);
+
+    return a == t;
+}
+
 bool operator>=(const decimal &a, const decimal &b)
 {
     // 1. Comparamos signos. Si son distintos, el positivo es el mayor.
@@ -840,6 +855,22 @@ bool operator>=(const decimal &a, const decimal &b)
     return a.is_negative() ? !a_mayor : a_mayor;
 }
 
+bool operator>=(const decimal &a, const int &b)
+{
+    decimal t(a.cifs, a.decs);
+    t = fpt::to_string(b);
+
+    return a >= t;
+}
+
+bool operator>=(const decimal &a, const double &b)
+{
+    decimal t(a.cifs, a.decs);
+    t = fpt::to_string(b);
+
+    return a >= t;
+}
+
 bool operator<=(const decimal &a, const decimal &b)
 {
     // 1. Comparamos signos. Si son distintos, el negativo es el menor.
@@ -870,6 +901,22 @@ bool operator<=(const decimal &a, const decimal &b)
 
     // Invertimos el resultado si a y b son negativos.
     return a.is_negative() ? !a_menor : a_menor;
+}
+
+bool operator<=(const decimal &a, const int &b)
+{
+    decimal t(a.cifs, a.decs);
+    t = fpt::to_string(b);
+
+    return a <= t;
+}
+
+bool operator<=(const decimal &a, const double &b)
+{
+    decimal t(a.cifs, a.decs);
+    t = fpt::to_string(b);
+
+    return a <= t;
 }
 
 decimal decimal::abs() const
@@ -911,29 +958,6 @@ decimal decimal::zero() const
     decimal t(cifs, decs);
 
     return t;
-}
-
-std::string decimal::int_to_str(const int &n, int width) const
-{
-    std::stringstream ss;
-
-    if(width > 0)
-        ss << std::setfill('0') << std::setw(width) << n;
-    else
-        ss << n;
-
-    return ss.str();
-}
-
-int decimal::str_to_int(const std::string &s) const
-{
-    int res;
-
-    std::stringstream is(s);
-
-    is >> res;
-
-    return res;
 }
 
 uint8_t decimal::char_to_pbcd(char cifra, bool high) const
@@ -997,11 +1021,8 @@ uint8_t decimal::get_cifra(unsigned int pos) const
 
 void decimal::set_cifra(uint8_t val, unsigned int pos)
 {
-    if(pos >= cifs) {
-        std::string exc_msg = "Imposible colocar la cifra. (val, pos): " + int_to_str(val) + ", " + int_to_str(pos);
-
-        throw std::out_of_range(exc_msg);
-    }
+    if(pos >= cifs)
+        throw std::out_of_range("Imposible colocar la cifra.");
 
     if((pos % 2) != 0) {
         // Posicion impar, colocamos el valor en el nybble alto del byte correspondiente.
