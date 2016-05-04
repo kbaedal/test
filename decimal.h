@@ -19,8 +19,9 @@
 #define DECIMAL_H_INCLUDED
 
 #include <cstdint>
-#include <string>
 #include <iostream>
+#include <string>
+#include <sstream>
 
 namespace fpt {
 
@@ -36,6 +37,8 @@ class decimal {
         // Operators - Asignation.
         decimal &operator=(const decimal &d);
         decimal &operator=(const std::string &val);
+        decimal &operator=(const int &val);
+        decimal &operator=(const double &val);
 
         // Operators: Negation (unary minus).
         decimal operator-()
@@ -245,6 +248,14 @@ class decimal {
         void convertir(const std::string &str);
 
         std::string int_to_str(const int &n, int width = 0) const;
+
+        template <typename T>
+        std::string to_string(T const &val)
+        {
+            std::stringstream temp;
+            temp << val;
+            return temp.str();
+        }
 
         int str_to_int(const std::string &s) const;
 

@@ -84,6 +84,24 @@ decimal &decimal::operator=(const std::string &val)
     return *this;
 }
 
+decimal &decimal::operator=(const int &val)
+{
+    std::string temp = to_string(val);
+
+    convertir(temp);
+
+    return *this;
+}
+
+decimal &decimal::operator=(const double &val)
+{
+    std::string temp = to_string(val);
+
+    convertir(temp);
+
+    return *this;
+}
+
 decimal &decimal::operator+=(const decimal &d)
 {
     /*
@@ -474,6 +492,9 @@ decimal &decimal::operator/=(const decimal &d)
         // Copiamos los datos en los temporales con el nuevo tamaño.
         r = d;
         n = *this;
+
+        r.set_positive();
+        n.set_positive();
 
         // Calculamos la inversa multiplicativa, y reconstruimos el
         // resultado para que tenga la precision adecuada.

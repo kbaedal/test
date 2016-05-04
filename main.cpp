@@ -42,8 +42,8 @@ int main()
     fpt::decimal a(10, 2);
     fpt::decimal b(10, 2);
 
-    a = "12.45";
-    b = "6.14";
+    a = -12.45;
+    b = -6;
 
     std::cout << a.to_str() << " + " << b.to_str() << " =\n\t" << (a+b).to_str() << "\n";
     std::cout << a.to_str() << " - " << b.to_str() << " =\n\t" << (a-b).to_str() << "\n";

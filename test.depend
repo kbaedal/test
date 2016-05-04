@@ -508,7 +508,7 @@
 	"utiles.h"
 	"cliente.h"
 
-1461752877 source:c:\develop\projects\test\decimal.cpp
+1462363169 source:c:\develop\projects\test\decimal.cpp
 	<algorithm>
 	<bitset>
 	<cstdlib>
@@ -519,12 +519,13 @@
 	<string>
 	"decimal.h"
 
-1462015110 c:\develop\projects\test\decimal.h
+1462360798 c:\develop\projects\test\decimal.h
 	<cstdint>
-	<string>
 	<iostream>
+	<string>
+	<sstream>
 
-1461753411 source:c:\develop\projects\test\main.cpp
+1462363131 source:c:\develop\projects\test\main.cpp
 	<iostream>
 	<string>
 	"decimal.h"
