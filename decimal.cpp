@@ -76,6 +76,9 @@ decimal &decimal::operator=(const std::string &val)
     // excepción si el nuevo contenido no cabe en el decimal.
     std::string tv = val;
 
+    if(tv.empty())
+        tv = "0";
+
     if(fpt::valid_number(tv, tv))
         convertir(tv);
     else
