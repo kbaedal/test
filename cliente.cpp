@@ -160,7 +160,7 @@ std::ostream &operator << (std::ostream &os, const Cliente &c)
     return os;
 }
 
-std::string Cliente::get_mysql_insert()
+std::string Cliente::get_mysql_insert() const
 {
     std::string temp;
 
@@ -168,7 +168,8 @@ std::string Cliente::get_mysql_insert()
         " cod_postal, poblacion, provincia, nif, tel1, tel2, fax, "
         " forma_pago, categoria, swift_bic, iban) VALUES (";
 
-    temp += utiles::IntToStr(codigo) + ",";
+    //temp += utiles::IntToStr(codigo) + ",";
+    temp += utiles::to_string(codigo) + ",";
     temp += "\"" + razon_social + "\",";
     temp += "\"" + domicilio + "\",";
     temp += "\"" + codigo_postal + "\",";
@@ -178,8 +179,10 @@ std::string Cliente::get_mysql_insert()
     temp += "\"" + tel1 + "\",";
     temp += "\"" + tel2 + "\",";
     temp += "\"" + fax + "\",";
-    temp += utiles::IntToStr(forma_pago) + ",";
-    temp += utiles::IntToStr(categoria) + ",";
+    //temp += utiles::IntToStr(forma_pago) + ",";
+    //temp += utiles::IntToStr(categoria) + ",";
+    temp += utiles::to_string(forma_pago) + ",";
+    temp += utiles::to_string(categoria) + ",";
     temp += "\"" + swift_bic + "\",";
     temp += "\"" + iban + "\"";
     temp += ")";
@@ -187,7 +190,7 @@ std::string Cliente::get_mysql_insert()
     return temp;
 }
 
-std::string Cliente::get_mysql_update()
+std::string Cliente::get_mysql_update() const
 {
     std::string temp = "UPDATE cliente SET";
 
@@ -200,11 +203,14 @@ std::string Cliente::get_mysql_update()
     temp += " tel1=\"" + tel1 + "\",";
     temp += " tel2=\"" + tel2 + "\",";
     temp += " fax=\"" + fax + "\",";
-    temp += " forma_pago=" + utiles::IntToStr(forma_pago) + ",";
-    temp += " categoria=" + utiles::IntToStr(categoria) + ",";
+    //temp += " forma_pago=" + utiles::IntToStr(forma_pago) + ",";
+    //temp += " categoria=" + utiles::IntToStr(categoria) + ",";
+    temp += " forma_pago=" + utiles::to_string(forma_pago) + ",";
+    temp += " categoria=" + utiles::to_string(categoria) + ",";
     temp += " swift_bic=\"" + swift_bic + "\",";
     temp += " iban=\"" + iban + "\"";
-    temp += " WHERE cliente.cod_cliente=" + utiles::IntToStr(codigo);
+    //temp += " WHERE cliente.cod_cliente=" + utiles::IntToStr(codigo);
+    temp += " WHERE cliente.cod_cliente=" + utiles::to_string(codigo);
 
     return temp;
 }
@@ -267,7 +273,7 @@ void Cliente::get_mysql_bind(MYSQL_BIND *my_bind)
 // llamada invalida estos datos.
 // Asegurarse de llamar a free_sql_bind() tras el uso de
 // los datos.
-MYSQL_BIND *Cliente::get_mysql_bind(void)
+MYSQL_BIND *Cliente::get_mysql_bind()
 {
     // Para acceder a los datos utilizamos un medio un poco ofuscado.
     // Podemos acceder con el operador [] a todos, solo tendremos

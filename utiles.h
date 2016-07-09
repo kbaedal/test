@@ -3,6 +3,8 @@
 #ifndef __UTILES_H__
 #define __UTILES_H__ 1
 
+#include <iomanip>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -369,6 +371,83 @@ inline std::string &ltrim(std::string &s, const char *ws = " \t\n\r\f\v")
 inline std::string &trim(std::string &s, const char *ws = " \t\n\r\f\v")
 {
     return ltrim(rtrim(s, ws), ws);
+}
+
+/*!
+ * \brief Convierte cualquier tipo de numero a una cadena.
+ *
+ * \param val Dato a convertir.
+ * \param width Tamaño de la cadena devuelta, rellenado a fillchar por la izquierda.
+ * \param fillchar Caracter con el que rellenamos hasta width por la izquierda.
+ * \return La cadena con el entero.
+ */
+template <typename T>
+std::string to_string(T const &val, int width = 0, char fillchar = '0')
+{
+    /*
+    std::stringstream temp;
+
+    temp << val;
+
+    return temp.str();
+    */
+
+    std::stringstream temp;
+
+    if(width > 0)
+        temp << std::setfill(fillchar) << std::setw(width) << val;
+    else
+        temp << val;
+
+    return temp.str();
+}
+
+/*!
+ * \brief Convierte cualquier tipo de cadena en un entero.
+ *
+ * \param val Dato a convertir.
+ */
+template <typename T>
+int to_integer(T const &val)
+{
+    int res;
+
+    // Nos aseguramos de que sea una cadena terminada en nulo.
+    // Por ejemplo, en el caso de que pasaramos un char,
+    // la generación de la plantilla nos daría error porque
+    // stringstream necesita una cadena terminada en nulo y una
+    // variable de tipo char no termina en nulo.
+    std::string temp {val};
+
+    std::stringstream is(temp);
+
+    is >> res;
+
+    return res;
+}
+
+/*!
+ * \brief Convierte cualquier tipo de cadena en un double.
+ *
+ * \param val Dato a convertir.
+ */
+template <typename T>
+double to_double(T const &val)
+{
+    double res;
+
+    // Nos aseguramos de que sea una cadena terminada en nulo.
+    // Por ejemplo, en el caso de que pasaramos un char,
+    // la generación de la plantilla nos daría error porque
+    // stringstream necesita una cadena terminada en nulo y una
+    // variable de tipo char no termina en nulo.
+    std::string temp {val};
+
+    std::stringstream is(temp);
+
+    is >> res;
+
+    return res;
 }
 
 } // namespace utiles

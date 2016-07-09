@@ -38,6 +38,8 @@ bool revisar_clientes(MYSQL *my_con);
 
 int get_datos_cliente(MYSQL *my_con, int codigo, Cliente &c);
 
+int update_datos_cliente(MYSQL *my_con, const Cliente &c);
+
 bool es_numero(const std::string &str);
 
 #endif // COSAS_H_INCLUDED

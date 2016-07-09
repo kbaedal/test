@@ -187,8 +187,13 @@ bool revisar_clientes(MYSQL *my_con)
     }
 
     // Actualización de cliente.
-    std::cout << "Actualizando " << clientes_actualizar.size() << " clientes... ";
+    std::cout << "\n\n";
+    int i = 0;
     for(auto c : clientes_actualizar) {
+
+        std::cout << "\rActualizando " << clientes_actualizar.size() << " clientes... ";
+        std::cout << utiles::to_string(++i) << "/" << clientes_actualizar.size();
+
         std::string consulta = c.get_mysql_update();
 
         if(mysql_query(my_con, consulta.c_str())) {
@@ -196,10 +201,15 @@ bool revisar_clientes(MYSQL *my_con)
             print_mysql_error(my_con, err_string);
         }
     }
-    std::cout << "Hecho." << std::endl;
+    std::cout << " ... Hecho." << std::endl;
 
-    std::cout << "Insertando " << clientes_insertar.size() << " clientes... ";
+    std::cout << "\n\n";
+    i = 0;
     for(auto c : clientes_insertar) {
+
+        std::cout << "\rInsertando " << clientes_insertar.size() << " clientes... ";
+        std::cout << utiles::to_string(++i) << "/" << clientes_insertar.size();
+
         std::string consulta = c.get_mysql_insert();
 
         if(mysql_query(my_con, consulta.c_str())) {
@@ -403,11 +413,8 @@ bool extraerDatosBlInfCli(BloqueInfoCliente bic_info, Cliente &datos_cliente)
 
     // Linea POBLACION.
     // Extraemos la poblacion y la provincia de la cadena szTemp.
+    // Quedan convertidas a UTF8 directamente.
     extraerPobProv(bic_info.linea_poblacion.substr(14, 40), datos_cliente.poblacion, datos_cliente.provincia);
-    //utiles::setTextToISO20022(datos_cliente.poblacion);
-    //utiles::setTextToISO20022(datos_cliente.provincia);
-    utiles::GID_to_UTF8(datos_cliente.poblacion);
-    utiles::GID_to_UTF8(datos_cliente.provincia);
 
     datos_cliente.fax.assign(bic_info.linea_poblacion, 57, 12);
     utiles::trim(datos_cliente.fax);
@@ -477,8 +484,8 @@ void extraerPobProv(std::string origen, std::string &poblacion, std::string &pro
         utiles::trim(poblacion);
     }
 
-    utiles::setTextToISO20022(poblacion);
-    utiles::setTextToISO20022(provincia);
+    utiles::GID_to_UTF8(poblacion);
+    utiles::GID_to_UTF8(provincia);
 }
 
 int get_datos_cliente(MYSQL *my_con, int codigo, Cliente &c)
@@ -486,7 +493,6 @@ int get_datos_cliente(MYSQL *my_con, int codigo, Cliente &c)
     std::string     consulta = "SELECT * FROM cliente WHERE COD_CLIENTE=" + utiles::IntToStr(codigo, 6);
     MYSQL_RES       *resultado;
     MYSQL_ROW       fila;
-    int             num_col;
 
     if(mysql_query(my_con, consulta.c_str()) != 0) {
         print_mysql_error(my_con, "Fallo al seleccionar un cliente.");
@@ -498,20 +504,65 @@ int get_datos_cliente(MYSQL *my_con, int codigo, Cliente &c)
             return 2;
         }
         else {
-            num_col = static_cast<int>(mysql_num_fields(resultado));
+            if(static_cast<int>(mysql_num_rows(resultado)) > 1) {
+                print_mysql_error(my_con, "Varios clientes con el mismo codigo.");
+                return 3;
+            }
+
+            if(static_cast<int>(mysql_num_fields(resultado)) != 15) {
+                print_mysql_error(my_con, "El numero de columnas no coincide.");
+                return 4;
+            }
+
+            // Columna      Contenido       Tipo
+            // -------      ---------       ----
+            //  0           id_cliente      Entero (No usable, interno BD)
+            //  1           cod_cliente     Entero
+            //  2           razon_social    Texto
+            //  3           domicilio       Texto
+            //  4           cod_postal      Texto
+            //  5           poblacion       Texto
+            //  6           provincia       Texto
+            //  7           nif             Texto
+            //  8           tel1            Texto
+            //  9           tel2            Texto
+            //  10          fax             Texto
+            //  11          forma_pago      Entero
+            //  12          categoria       Entero
+            //  13          swift_bic       Texto
+            //  14          iban            Texto
 
             while((fila = mysql_fetch_row(resultado)) != NULL) {
-                for(int i = 0; i < num_col; ++i) {
-                    if(fila[i] != NULL)
-                        std::cout << fila[i] << " ";
-                    else
-                        std::cout << "NULL";
-                }
-                std::cout << std::endl;
+                c.codigo        = (fila[1] != NULL) ? utiles::to_integer(fila[1]) : 0;
+                c.razon_social  = fila[2];
+                c.domicilio     = fila[3];
+                c.codigo_postal = fila[4];
+                c.poblacion     = fila[5];
+                c.provincia     = fila[6];
+                c.nif           = fila[7];
+                c.tel1          = fila[8];
+                c.tel2          = fila[9];
+                c.fax           = fila[10];
+                c.forma_pago    = (fila[11] != NULL) ? utiles::to_integer(fila[11]) : 0;
+                c.categoria     = (fila[12] != NULL) ? utiles::to_integer(fila[12]) : 0;
+                c.swift_bic     = fila[13];
+                c.iban          = fila[14];
             }
 
             mysql_free_result(resultado);
         }
+    }
+
+    return 0;
+}
+
+int update_datos_cliente(MYSQL *my_con, const Cliente &c)
+{
+    std::string     consulta = c.get_mysql_update();
+
+    if(mysql_query(my_con, consulta.c_str()) != 0) {
+        print_mysql_error(my_con, "Fallo al actualizar cliente.");
+        return 1;
     }
 
     return 0;

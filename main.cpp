@@ -1,13 +1,14 @@
 #include <iostream>
 #include <string>
 
-//#include <mysql.h>
+#include <mysql.h>
 
+#include "cliente.h"
 #include "decimal.h"
+#include "cosas.h"
 
 int main()
 {
-    /*
     MYSQL *my_con = mysql_init(NULL);
 
     // Incializamos la estructura de la conexion.
@@ -32,30 +33,9 @@ int main()
 
     //verificar_tablas(my_con);
 
-    //revisar_clientes(my_con);
-    Cliente c;
-
-    get_datos_cliente(my_con, 100, c);
+    revisar_clientes(my_con);
 
     mysql_close(my_con);
-    */
-    fpt::decimal a(10, 2);
-    fpt::decimal b(10, 2);
-
-    a = "5.65";
-    b = "2.50";
-
-    std::cout << a.to_str() << " + " << b.to_str() << " =\n\t" << (a+b).to_str() << "\n";
-    std::cout << a.to_str() << " - " << b.to_str() << " =\n\t" << (a-b).to_str() << "\n";
-    std::cout << a.to_str() << " * " << b.to_str() << " =\n\t" << (a*b).to_str() << "\n";
-    std::cout << a.to_str() << " / " << b.to_str() << " =\n\t" << (a/b).to_str() << "\n";
-
-    //std::cout << "max(a) :  " << c.max().to_str() << "\n";
-    //std::cout << "min(a) :  " << c.min().to_str() << "\n";
-    //std::cout << "abs(a) :  " << c.abs().to_str() << "\n";
-    //std::cout << "zero(a) : " << c.zero().to_str() << "\n";
-    //std::cout << "+a:       " << (+c).to_str() << "\n";
-    //std::cout << "-a:       " << (-c).to_str() << "\n";
 
     return 0;
 }

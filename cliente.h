@@ -36,14 +36,14 @@ class Cliente {
         friend std::ostream &operator << (std::ostream &os, const Cliente &c);
 
         // Devuelve una cadena para lanzar un INSERT contra la base de datos.
-        std::string get_mysql_insert();
+        std::string get_mysql_insert() const;
 
         // Devuelve una cadena para lanzar un INSERT contra la base de datos.
-        std::string get_mysql_update();
+        std::string get_mysql_update() const;
 
         // Rellena la estructura para un prepared stament de mysql.
         void get_mysql_bind(MYSQL_BIND *my_bind);
-        MYSQL_BIND *get_mysql_bind(void);
+        MYSQL_BIND *get_mysql_bind();
 
         // Libera los recursos adquiridos por get_mysql_bin.
         void free_mysql_bind();

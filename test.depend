@@ -438,7 +438,7 @@
 1456419220 c:\prog\test\decimal.h
 	<cstdint>
 
-1456481478 source:c:\develop\projects\test\cliente.cpp
+1468055817 source:c:\develop\projects\test\cliente.cpp
 	<iostream>
 	<cstring>
 	<string>
@@ -447,31 +447,29 @@
 	"cliente.h"
 	"utiles.h"
 
-1453954362 c:\develop\libs\mysql\include\mysql.h
-	<standards.h>
+1460457251 c:\develop\libs\mysql\include\mysql.h
 	<sys/types.h>
-	"mysql_version.h"
 	"mysql_com.h"
-	"mysql_time.h"
+	"mysql_version.h"
 	"my_list.h"
-	"typelib.h"
-	"my_alloc.h"
+	"m_ctype.h"
+	<my_stmt.h>
 
-1453956126 c:\develop\libs\mysql\include\mysql_version.h
+1466769518 c:\develop\libs\mysql\include\mysql_version.h
 	<custom_conf.h>
 
-1453954362 c:\develop\libs\mysql\include\mysql_com.h
+1460457251 c:\develop\libs\mysql\include\mysql_com.h
 
 1453954362 c:\develop\libs\mysql\include\mysql_time.h
 
-1453954362 c:\develop\libs\mysql\include\my_list.h
+1460457251 c:\develop\libs\mysql\include\my_list.h
 
 1453954362 c:\develop\libs\mysql\include\typelib.h
 	"my_alloc.h"
 
 1453954362 c:\develop\libs\mysql\include\my_alloc.h
 
-1456314430 c:\develop\projects\test\cliente.h
+1468055772 c:\develop\projects\test\cliente.h
 	<iostream>
 	<cstring>
 	<string>
@@ -479,11 +477,13 @@
 	<mysql.h>
 	"utiles.h"
 
-1459941067 c:\develop\projects\test\utiles.h
+1468054681 c:\develop\projects\test\utiles.h
+	<iomanip>
+	<sstream>
 	<string>
 	<vector>
 
-1459941103 source:c:\develop\projects\test\cosas.cpp
+1468055551 source:c:\develop\projects\test\cosas.cpp
 	<cstdio>
 	<cstdlib>
 	<cstring>
@@ -499,7 +499,7 @@
 	"cosas.h"
 	"cliente.h"
 
-1456481479 c:\develop\projects\test\cosas.h
+1468055299 c:\develop\projects\test\cosas.h
 	<iostream>
 	<cstring>
 	<string>
@@ -508,7 +508,7 @@
 	"utiles.h"
 	"cliente.h"
 
-1462378245 source:c:\develop\projects\test\decimal.cpp
+1462461816 source:c:\develop\projects\test\decimal.cpp
 	<algorithm>
 	<bitset>
 	<cstdlib>
@@ -525,10 +525,13 @@
 	<string>
 	<sstream>
 
-1462378046 source:c:\develop\projects\test\main.cpp
+1468057732 source:c:\develop\projects\test\main.cpp
 	<iostream>
 	<string>
+	<mysql.h>
+	"cliente.h"
 	"decimal.h"
+	"cosas.h"
 
 1459941298 source:c:\develop\projects\test\utiles.cpp
 	<cstdio>
@@ -553,4 +556,9 @@
 	<stdexcept>
 	<string>
 	"decimal.h"
+
+1460457251 c:\develop\libs\mysql\include\m_ctype.h
+	<ctype.h>
+
+1460457251 c:\develop\libs\mysql\include\my_stmt.h
 
