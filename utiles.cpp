@@ -1094,6 +1094,36 @@ std::string &utiles::GID_to_UTF8(std::string &s)
     return s;
 }
 
+std::string &utiles::GID_to_LATIN(std::string &s)
+{
+    std::string temp;
+
+    for(size_t i = 0; i < s.size(); ++i) {
+        if((s[i] & 0xFF) == 0xA5) { // Letra Ñ
+            temp += 'Ñ';
+        } else if((s[i] & 0xFF) == 0xA6) { // Simbolo º
+            temp += 'º';
+        } else if((s[i] & 0xFF) == 0xA7) { // Símbolo ª
+            temp += 'ª';
+        } else if((s[i] & 0xFF) == 0xD1) { // Letra Ñ
+            temp += 'Ñ';
+        } else if((s[i] & 0xFF) == 0x9A) { // Letra Ü
+            temp += 'Ü';
+        } else if((s[i] & 0xFF) == 0xD3) { // Letra Ë
+            temp += 'Ë';
+        } else if((s[i] & 0xFF) == 0x22) { // Comillas, sustituimos por espacio.
+            temp += ' ';
+        }
+        else {
+            temp += s[i];
+        }
+    }
+
+    s = temp;
+
+    return s;
+}
+
 bool utiles::UTF8ToISO20022(const std::string origen, std::string &destino)
 {
     unsigned int    pos = 0;

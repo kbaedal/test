@@ -8,6 +8,7 @@
 
 #include <mysql.h>
 
+#include "db_aux_def.h"
 #include "utiles.h"
 
 class Cliente {
@@ -36,18 +37,15 @@ class Cliente {
         friend std::ostream &operator << (std::ostream &os, const Cliente &c);
 
         // Devuelve una cadena para lanzar un INSERT contra la base de datos.
-        std::string get_mysql_insert() const;
+        std::string get_mysql_insert_str() const;
 
         // Devuelve una cadena para lanzar un INSERT contra la base de datos.
-        std::string get_mysql_update() const;
+        std::string get_mysql_update_str() const;
 
-        // Rellena la estructura para un prepared stament de mysql.
-        void get_mysql_bind(MYSQL_BIND *my_bind);
-        MYSQL_BIND *get_mysql_bind();
+        std::string to_csv() const;
 
-        // Libera los recursos adquiridos por get_mysql_bin.
-        void free_mysql_bind();
-        int free_mysql_bind(MYSQL_BIND *my_bind);
+        // Rellena la estructura para una consulta preparada en mysql.
+        void fill_mysql_bind(data_bind_storage &data);
 
         int     id;
         char    tipo;   // F = persona física, J = persona jurídica.
@@ -68,9 +66,8 @@ class Cliente {
                     swift_bic,
                     iban;
 
-    private:
-        char            **datos;
-        unsigned int    num_campos = 14;
+        // Tipo del campo accedido. Para operador[n] el tipo es info_campos[n].
+        static tipo_campo   info_campos[];
 };
 
 class BloqueInfoCliente {

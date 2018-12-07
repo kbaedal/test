@@ -438,16 +438,16 @@
 1456419220 c:\prog\test\decimal.h
 	<cstdint>
 
-1468055817 source:c:\develop\projects\test\cliente.cpp
+1474541125 source:c:\develop\projects\test\cliente.cpp
 	<iostream>
 	<cstring>
 	<string>
 	<stdexcept>
-	<mysql.h>
 	"cliente.h"
+	"db_aux_def.h"
 	"utiles.h"
 
-1460457251 c:\develop\libs\mysql\include\mysql.h
+1460453651 c:\develop\libs\mysql\include\mysql.h
 	<sys/types.h>
 	"mysql_com.h"
 	"mysql_version.h"
@@ -455,51 +455,54 @@
 	"m_ctype.h"
 	<my_stmt.h>
 
-1466769518 c:\develop\libs\mysql\include\mysql_version.h
+1466765918 c:\develop\libs\mysql\include\mysql_version.h
 	<custom_conf.h>
 
-1460457251 c:\develop\libs\mysql\include\mysql_com.h
+1460453651 c:\develop\libs\mysql\include\mysql_com.h
 
 1453954362 c:\develop\libs\mysql\include\mysql_time.h
 
-1460457251 c:\develop\libs\mysql\include\my_list.h
+1460453651 c:\develop\libs\mysql\include\my_list.h
 
 1453954362 c:\develop\libs\mysql\include\typelib.h
 	"my_alloc.h"
 
 1453954362 c:\develop\libs\mysql\include\my_alloc.h
 
-1468055772 c:\develop\projects\test\cliente.h
+1474539401 c:\develop\projects\test\cliente.h
 	<iostream>
 	<cstring>
 	<string>
 	<stdexcept>
 	<mysql.h>
+	"db_aux_def.h"
 	"utiles.h"
 
-1468054681 c:\develop\projects\test\utiles.h
+1474551709 c:\develop\projects\test\utiles.h
 	<iomanip>
 	<sstream>
 	<string>
 	<vector>
 
-1468055551 source:c:\develop\projects\test\cosas.cpp
+1474555562 source:c:\develop\projects\test\cosas.cpp
+	<algorithm>
+	<cmath>
+	<cstring>
 	<cstdio>
 	<cstdlib>
-	<cstring>
-	<cmath>
-	<iostream>
 	<fstream>
+	<iostream>
 	<sstream>
 	<string>
 	<vector>
-	<algorithm>
 	<mysql.h>
-	"utiles.h"
 	"cosas.h"
 	"cliente.h"
+	"proveedor.h"
+	"db_aux_def.h"
+	"utiles.h"
 
-1468055299 c:\develop\projects\test\cosas.h
+1474874168 c:\develop\projects\test\cosas.h
 	<iostream>
 	<cstring>
 	<string>
@@ -507,8 +510,10 @@
 	<mysql.h>
 	"utiles.h"
 	"cliente.h"
+	"proveedor.h"
+	"db_aux_def.h"
 
-1462461816 source:c:\develop\projects\test\decimal.cpp
+1475922768 source:c:\develop\projects\test\decimal.cpp
 	<algorithm>
 	<bitset>
 	<cstdlib>
@@ -519,21 +524,27 @@
 	<string>
 	"decimal.h"
 
-1462377759 c:\develop\projects\test\decimal.h
+1475853986 c:\develop\projects\test\decimal.h
 	<cstdint>
 	<iostream>
 	<string>
 	<sstream>
 
-1468057732 source:c:\develop\projects\test\main.cpp
+1475926308 source:c:\develop\projects\test\main.cpp
+	<fstream>
+	<iomanip>
 	<iostream>
+	<list>
 	<string>
+	<vector>
 	<mysql.h>
 	"cliente.h"
 	"decimal.h"
 	"cosas.h"
+	"decoart.h"
+	"articulo.h"
 
-1459941298 source:c:\develop\projects\test\utiles.cpp
+1475136892 source:c:\develop\projects\test\utiles.cpp
 	<cstdio>
 	<cstdlib>
 	<cstring>
@@ -557,8 +568,61 @@
 	<string>
 	"decimal.h"
 
-1460457251 c:\develop\libs\mysql\include\m_ctype.h
+1460453651 c:\develop\libs\mysql\include\m_ctype.h
 	<ctype.h>
 
-1460457251 c:\develop\libs\mysql\include\my_stmt.h
+1460453651 c:\develop\libs\mysql\include\my_stmt.h
+
+1469004464 c:\develop\projects\test\mysqlaux.h
+
+1470667513 c:\develop\projects\test\db_aux_def.h
+	<vector>
+
+1470667502 source:c:\develop\projects\test\db_aux_def.cpp
+	<tuple>
+	"db_aux_def.h"
+
+1474554102 c:\develop\projects\test\proveedor.h
+	<iostream>
+	<cstring>
+	<string>
+	<stdexcept>
+	<mysql.h>
+	"db_aux_def.h"
+	"utiles.h"
+
+1474555194 source:c:\develop\projects\test\proveedor.cpp
+	<iostream>
+	<cstring>
+	<string>
+	<stdexcept>
+	"proveedor.h"
+	"db_aux_def.h"
+	"utiles.h"
+
+1474887883 source:c:\develop\projects\test\expart.cpp
+	"expart.h"
+	"utiles.h"
+
+1474889346 c:\develop\projects\test\expart.h
+	<string>
+	<vector>
+
+1475911217 source:c:\develop\projects\test\decoart.cpp
+	<iostream>
+	"decoart.h"
+	"utiles.h"
+	"decimal.h"
+
+1475595814 c:\develop\projects\test\decoart.h
+	<string>
+	<vector>
+
+1476095222 source:c:\develop\projects\test\articulo.cpp
+	<string>
+	"utiles.h"
+	"articulo.h"
+
+1476095125 c:\develop\projects\test\articulo.h
+	"decimal.h"
 

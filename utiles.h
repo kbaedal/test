@@ -308,7 +308,6 @@ bool es_numero(const std::string &str);
  */
 std::string pasarMayusculas(const std::string &s);
 
-// Convierte una cadena exportada desde GID a UTF8.
 /*!
  * \brief Convierte una cadena leida de GID a UTF8.
  *
@@ -317,7 +316,6 @@ std::string pasarMayusculas(const std::string &s);
  */
 char *GIDToUTF8(const char *s);
 
-// Convierte una cadena exportada desde GID a UTF8, version std::string
 /*!
  * \brief Convierte una cadena leida de GID a UTF8.
  *
@@ -325,6 +323,14 @@ char *GIDToUTF8(const char *s);
  * \return La cadena convertida.
  */
 std::string &GID_to_UTF8(std::string &s);
+
+/*!
+ * \brief Convierte una cadena leida de GID a la pagina de caracteres en cristiano de España.
+ *
+ * \param s Cadena a convertir.
+ * \return La cadena convertida.
+ */
+std::string &GID_to_LATIN(std::string &s);
 
 /*!
  * \brief Convierte una cadena con caracteres UTF8 a ISO20022.

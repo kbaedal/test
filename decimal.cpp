@@ -714,28 +714,59 @@ bool valid_number(const std::string &str, std::string &t)
     );
 }
 
-std::string decimal::to_str(bool format) const
+/*
+std::string decimal::to_str(const char dec_coma, bool format) const
 {
     std::string t;
 
     for(unsigned int i = 0; i < cifs; ++i) {
         if(i == decs && decs != 0)
-            t.insert(0, 1, '.');
+            t.insert(0, 1, dec_coma);
 
         t.insert(0, 1, pbcd_to_char(this->get_cifra(i), false));
     }
 
-    // Para formatear el numero, eliminamos los 0 a las izquiera.
+    // Para formatear el numero, eliminamos los 0 a las izquierda.
     if(format) {
         t.erase(0, t.find_first_not_of("0"));
 
         // Si no tenemos ningún entero, al menos dejamos un 0.
-        if(t[0] == '.')
+        if(t[0] == dec_coma)
             t.insert(0, 1, '0');
     }
 
     if(this->is_negative())
         t.insert(0, 1, '-');
+
+    return t;
+}
+*/
+
+std::string decimal::to_str(const char dec_coma) const
+{
+    std::string t;
+
+    for(unsigned int i = 0; i < cifs; ++i) {
+        if(i == decs && decs != 0)
+            t.insert(0, 1, dec_coma);
+
+        t.insert(0, 1, pbcd_to_char(this->get_cifra(i), false));
+    }
+
+    // Para formatear el numero, eliminamos los 0 a las izquierda.
+    if( !(status & (0x01 << 3)) ) {
+        t.erase(0, t.find_first_not_of("0"));
+
+        // Si no tenemos ningún entero, al menos dejamos un 0.
+        if(t[0] == dec_coma)
+            t.insert(0, 1, '0');
+    }
+
+    if(this->is_negative())
+        t.insert(0, 1, '-');
+    //else if((status >> 2) & 0x01)
+    else if(status & (0x01 << 2))
+        t.insert(0, 1, '+');
 
     return t;
 }

@@ -3,39 +3,40 @@
 #include <string>
 #include <stdexcept>
 
-#include <mysql.h>
-
 #include "cliente.h"
+#include "db_aux_def.h"
 #include "utiles.h"
 
-
+tipo_campo Cliente::info_campos[] = {
+    tipo_campo::IS_INT,     // Codigo
+    tipo_campo::IS_TXT,     // Razon social
+    tipo_campo::IS_TXT,     // Domicilio
+    tipo_campo::IS_TXT,     // Codigo Postal
+    tipo_campo::IS_TXT,     // Poblacion
+    tipo_campo::IS_TXT,     // Provincia
+    tipo_campo::IS_TXT,     // Nif
+    tipo_campo::IS_TXT,     // Tel1
+    tipo_campo::IS_TXT,     // Tel2
+    tipo_campo::IS_TXT,     // Fax
+    tipo_campo::IS_INT,     // Forma de pago
+    tipo_campo::IS_INT,     // Categoria
+    tipo_campo::IS_TXT,     // Swift-BIC
+    tipo_campo::IS_TXT      // IBAN
+};
 
 Cliente::Cliente()
 {
     this->limpiar();
-    datos = new char*[num_campos];
-
-    for(size_t i = 0; i < num_campos; ++i)
-        datos[i] = nullptr;
 }
 
 Cliente::Cliente(const Cliente &c)
 {
-    datos = new char*[num_campos];
-
-    for(size_t i = 0; i < num_campos; ++i)
-        datos[i] = nullptr;
-
     *this = c;
 }
 
 Cliente::~Cliente()
 {
-    for(size_t i = 0; i < num_campos; ++i)
-        if(datos[i] != nullptr)
-            delete [] datos[i];
 
-    delete [] datos;
 }
 
 Cliente &Cliente::operator = (const Cliente &c)
@@ -62,42 +63,6 @@ Cliente &Cliente::operator = (const Cliente &c)
     return *this;
 }
 
-//std::string operator [](unsigned int i) const
-//{
-//    switch(i) {
-//        case 1: return razon_social;
-//        case 2: return domicilio;
-//        case 3: return codigo_postal;
-//        case 4: return poblacion;
-//        case 5: return provincia;
-//        case 6: return nif;
-//        case 7: return tel1;
-//        case 8: return tel2;
-//        case 9: return fax;
-//        case 12: return swift_bic;
-//        case 13: return iban;
-//        default: throw std::out_of_range("Cliente:string");
-//    }
-//}
-//
-//std::string &operator [](unsigned int i)
-//{
-//    switch(i) {
-//        case 1: return razon_social;
-//        case 2: return domicilio;
-//        case 3: return codigo_postal;
-//        case 4: return poblacion;
-//        case 5: return provincia;
-//        case 6: return nif;
-//        case 7: return tel1;
-//        case 8: return tel2;
-//        case 9: return fax;
-//        case 12: return swift_bic;
-//        case 13: return iban;
-//        default: throw std::out_of_range("Cliente::string");
-//    }
-//}
-
 void *Cliente::operator[](unsigned int i)
 {
     switch(i) {
@@ -115,7 +80,7 @@ void *Cliente::operator[](unsigned int i)
         case 11: return static_cast<void *>(&categoria);
         case 12: return static_cast<void *>(&swift_bic);
         case 13: return static_cast<void *>(&iban);
-        default: throw std::out_of_range("Cliente::string");
+        default: throw std::out_of_range("Cliente::operator[]");
     }
 }
 
@@ -142,7 +107,7 @@ void Cliente::limpiar(void)
 std::ostream &operator << (std::ostream &os, const Cliente &c)
 {
     os << "Cliente:\n" <<
-            "\tCod. Cliente: "  << utiles::IntToStr(c.codigo, 6)        << std::endl <<
+            "\tCod. Cliente: "  << utiles::to_string(c.codigo, 6)        << std::endl <<
             "\tRazon Social: "  << c.razon_social                       << std::endl <<
             "\tDomicilio:    "  << c.domicilio                          << std::endl <<
             "\tCod. Postal:  "  << c.codigo_postal                      << std::endl <<
@@ -152,15 +117,15 @@ std::ostream &operator << (std::ostream &os, const Cliente &c)
             "\tTel1:         "  << c.tel1                               << std::endl <<
             "\tTel2:         "  << c.tel2                               << std::endl <<
             "\tFax:          "  << c.fax                                << std::endl <<
-            "\tForma Pago:   "  << utiles::IntToStr(c.forma_pago, 2)    << std::endl <<
-            "\tCategoria:    "  << utiles::IntToStr(c.categoria, 2)     << std::endl <<
+            "\tForma Pago:   "  << utiles::to_string(c.forma_pago, 2)    << std::endl <<
+            "\tCategoria:    "  << utiles::to_string(c.categoria, 2)     << std::endl <<
             "\tSWIFT-BIC:    "  << c.swift_bic                          << std::endl <<
             "\tIBAN:         "  << c.iban                               << std::endl << std::endl;
 
     return os;
 }
 
-std::string Cliente::get_mysql_insert() const
+std::string Cliente::get_mysql_insert_str() const
 {
     std::string temp;
 
@@ -168,7 +133,6 @@ std::string Cliente::get_mysql_insert() const
         " cod_postal, poblacion, provincia, nif, tel1, tel2, fax, "
         " forma_pago, categoria, swift_bic, iban) VALUES (";
 
-    //temp += utiles::IntToStr(codigo) + ",";
     temp += utiles::to_string(codigo) + ",";
     temp += "\"" + razon_social + "\",";
     temp += "\"" + domicilio + "\",";
@@ -179,8 +143,6 @@ std::string Cliente::get_mysql_insert() const
     temp += "\"" + tel1 + "\",";
     temp += "\"" + tel2 + "\",";
     temp += "\"" + fax + "\",";
-    //temp += utiles::IntToStr(forma_pago) + ",";
-    //temp += utiles::IntToStr(categoria) + ",";
     temp += utiles::to_string(forma_pago) + ",";
     temp += utiles::to_string(categoria) + ",";
     temp += "\"" + swift_bic + "\",";
@@ -190,7 +152,7 @@ std::string Cliente::get_mysql_insert() const
     return temp;
 }
 
-std::string Cliente::get_mysql_update() const
+std::string Cliente::get_mysql_update_str() const
 {
     std::string temp = "UPDATE cliente SET";
 
@@ -203,146 +165,74 @@ std::string Cliente::get_mysql_update() const
     temp += " tel1=\"" + tel1 + "\",";
     temp += " tel2=\"" + tel2 + "\",";
     temp += " fax=\"" + fax + "\",";
-    //temp += " forma_pago=" + utiles::IntToStr(forma_pago) + ",";
-    //temp += " categoria=" + utiles::IntToStr(categoria) + ",";
     temp += " forma_pago=" + utiles::to_string(forma_pago) + ",";
     temp += " categoria=" + utiles::to_string(categoria) + ",";
     temp += " swift_bic=\"" + swift_bic + "\",";
     temp += " iban=\"" + iban + "\"";
-    //temp += " WHERE cliente.cod_cliente=" + utiles::IntToStr(codigo);
     temp += " WHERE cliente.cod_cliente=" + utiles::to_string(codigo);
 
     return temp;
 }
 
-// Rellena la estructura para un prepared stament de mysql.
-// Ojo, cualquier modificación de los datos posterior a esta
-// llamada invalida estos datos.
-// Asegurarse de llamar a free_sql_bind() tras el uso de
-// los datos.
-void Cliente::get_mysql_bind(MYSQL_BIND *my_bind)
+void Cliente::fill_mysql_bind(data_bind_storage &data)
 {
-    // Para acceder a los datos utilizamos un medio un poco ofuscado.
-    // Podemos acceder con el operador [] a todos, solo tendremos
-    // que separar los que son enteros de los que son cadenas.
-    // Utilizamos la versión funcion del operador, ya que así
-    // accedemos desde el puntero this, asegurandonos que tenemos
-    // lo que queremos.
-    // El operador [] devuelve void*, justo lo que necesitamos.
-    void                *buffer;
-    enum_field_types    buffer_type;
+    int     str_count = 0,  // Controlamos cuantos datos llevamos incorporados
+            int_count = 0;  // a la estructura.
 
-    // Limpiamos las cadenas, por si ya se están usando.
-    this->free_mysql_bind();
+    std::string *cadena;    // Para manejo de datos.
 
-    for(size_t i = 0; i < num_campos; ++i) {
-        if((i == 0) || (i ==  10) || (i == 11))  {
-            // Enteros. Asignamos y seguimos.
-            buffer_type = MYSQL_TYPE_LONG;
-            buffer      = this->operator[](i);
-        }
-        else {
-            // Cadenas de caracteres.
-            // Reservamos memoria para copiar las cadenas desde
-            // las std::strings que tenemos a cadenas c-style.
-            // Como hemos reservado memoria para incluir hasta
-            // num_campos cadenas en la variable **datos, utilizamos
-            // el mismo contador del bucle para no tener que
-            // preocuparnos de controlar otra variable más.
-            // El consumo de memoria es mínimo (dejamos unos pocos
-            // punteros a nullptr) y la legibilidad del código es mayor.
+    // Utilizamos el operador [] que hemos definido, el cual nos devuelve
+    // un puntero a void a cada uno de los campos del cliente.
+    // Simplemente, siguiendo el orden, colocamos los datos en el lugar
+    // adecuado, dependiendo del tipo de dato.
+    // Para los enteros, copiamos el contenido (usando *puntero).
+    // Para las cadenas, habremos de hacer una copia en la estructura.
+    // Se da por supuesto que la estructura está inicializada y tenemos
+    // espacio suficiente.
+    for(int i = 0; i < db_consts::cliente_num_campos; ++i) {
+        switch(info_campos[i]) {
+            case tipo_campo::IS_INT :
+                // Colocamos un entero. Copiamos en su lugar.
+                data.int_data[int_count] = *static_cast<int *>(this->operator[](i));
 
-            std::string *cadena = static_cast<std::string *>(this->operator[](i));
-            datos[i] = new char[cadena->size() + 1];
-            std::strcpy(datos[i], cadena->c_str());
+                ++int_count;
+                break;
+            case tipo_campo::IS_TXT :
+                // Colocamos una cadena. Copiamos la cadena e indicamos longitud.
+                cadena = static_cast<std::string *>(this->operator[](i));
+                std::strcpy(data.str_data[str_count], cadena->c_str());
+                data.str_long[str_count] = cadena->size();
 
-            buffer_type = MYSQL_TYPE_STRING;
-            buffer      = static_cast<void *>(datos[i]);
-        }
-
-        // Rellenamos la estructura y salimos.
-        my_bind[i].buffer_type   = buffer_type;
-        my_bind[i].buffer        = buffer;
-        my_bind[i].is_unsigned   = 0;
-        my_bind[i].is_null       = 0;
-    }
-}
-
-// Rellena la estructura para un prepared stament de mysql.
-// Ojo, cualquier modificación de los datos posterior a esta
-// llamada invalida estos datos.
-// Asegurarse de llamar a free_sql_bind() tras el uso de
-// los datos.
-MYSQL_BIND *Cliente::get_mysql_bind()
-{
-    // Para acceder a los datos utilizamos un medio un poco ofuscado.
-    // Podemos acceder con el operador [] a todos, solo tendremos
-    // que separar los que son enteros de los que son cadenas.
-    // Utilizamos la versión funcion del operador, ya que así
-    // accedemos desde el puntero this, asegurandonos que tenemos
-    // lo que queremos.
-    // El operador [] devuelve void*, justo lo que necesitamos.
-    void                *buffer;
-    enum_field_types    buffer_type;
-    MYSQL_BIND          *my_bind = new MYSQL_BIND[num_campos];
-
-    for(size_t i = 0; i < num_campos; ++i) {
-        if((i == 0) || (i ==  10) || (i == 11))  {
-            // Enteros. Asignamos y seguimos.
-
-            int *ptrdato = new int;
-            *ptrdato = *static_cast<int *>(this->operator[](i));
-
-            buffer_type = MYSQL_TYPE_LONG;
-            buffer      = static_cast<void *>(ptrdato);
-        }
-        else {
-            // Cadenas de caracteres.
-            // Reservamos memoria para copiar las cadenas desde
-            // las std::strings que tenemos a cadenas c-style.
-
-            std::string *cadena = static_cast<std::string *>(this->operator[](i));
-            char        *ptrdato = new char[cadena->size() + 1];
-            std::strcpy(ptrdato, cadena->c_str());
-
-            buffer_type = MYSQL_TYPE_STRING;
-            buffer      = static_cast<void *>(ptrdato);
-        }
-
-        // Rellenamos la estructura y salimos.
-        my_bind[i].buffer_type   = buffer_type;
-        my_bind[i].buffer        = buffer;
-        my_bind[i].is_unsigned   = 0;
-        my_bind[i].is_null       = 0;
-    }
-
-    return my_bind;
-}
-
-void Cliente::free_mysql_bind()
-{
-    for(size_t i = 0; i < num_campos; ++i) {
-        if(datos[i] != nullptr) {
-            delete [] datos[i];
-            datos[i] = nullptr;
+                ++str_count;
+                break;
+            case tipo_campo::IS_DEC :
+                // En este caso, convertimos el dato a una cadena.
+                /// TO DO ///
+                break;
+            default:
+                break;
         }
     }
 }
 
-int Cliente::free_mysql_bind(MYSQL_BIND *my_bind)
+std::string Cliente::to_csv() const
 {
-    for(size_t i; i < num_campos; ++i) {
-        if((i == 0) || (i ==  10) || (i == 11)) {
-            int *ptrdato = static_cast<int *>(my_bind[i].buffer);
-            delete ptrdato;
-        }
-        else {
-            char *ptrdato = static_cast<char *>(my_bind[i].buffer);
-            delete [] ptrdato;
-        }
-    }
+    std::string temp {};
 
-    delete [] my_bind;
+    temp += utiles::to_string(codigo, 6) + ";";
+    temp += razon_social + ";";
+    temp += domicilio + ";";
+    temp += codigo_postal + ";";
+    temp += poblacion + ";";
+    temp += provincia + ";";
+    temp += nif + ";";
+    temp += tel1 + ";";
+    temp += tel2 + ";";
+    temp += fax + ";";
+    temp += utiles::to_string(forma_pago, 2) + ";";
+    temp += utiles::to_string(categoria) + ";";
+    temp += swift_bic + ";";
+    temp += iban + ";";
 
-    return 0;
+    return temp;
 }

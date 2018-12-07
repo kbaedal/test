@@ -1,5 +1,12 @@
 *.zip
 *.o
 *.layout
+*.xls
+*.csv
+*.dat
+*.workspace
+*.project
 bin/
 doc/
+.codelite/
+

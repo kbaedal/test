@@ -40,13 +40,21 @@
 			<Add library="C:/Develop/Libs/mysql/lib/libmysql.a" />
 			<Add directory="C:/Develop/Libs/mysql/lib" />
 		</Linker>
+		<Unit filename="articulo.cpp" />
+		<Unit filename="articulo.h" />
 		<Unit filename="cliente.cpp" />
 		<Unit filename="cliente.h" />
 		<Unit filename="cosas.cpp" />
 		<Unit filename="cosas.h" />
+		<Unit filename="db_aux_def.cpp" />
+		<Unit filename="db_aux_def.h" />
 		<Unit filename="decimal.cpp" />
 		<Unit filename="decimal.h" />
+		<Unit filename="decoart.cpp" />
+		<Unit filename="decoart.h" />
 		<Unit filename="main.cpp" />
+		<Unit filename="proveedor.cpp" />
+		<Unit filename="proveedor.h" />
 		<Unit filename="utiles.cpp" />
 		<Unit filename="utiles.h" />
 		<Extensions>

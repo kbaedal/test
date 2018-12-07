@@ -1,19 +1,21 @@
+#include <algorithm>
+#include <cmath>
+#include <cstring>
 #include <cstdio>
 #include <cstdlib>
-#include <cstring>
-#include <cmath>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <algorithm>
 
 #include <mysql.h>
 
-#include "utiles.h"
 #include "cosas.h"
 #include "cliente.h"
+#include "proveedor.h"
+#include "db_aux_def.h"
+#include "utiles.h"
 
 void print_mysql_error (MYSQL *my_con, const std::string &mensaje)
 {
@@ -23,6 +25,17 @@ void print_mysql_error (MYSQL *my_con, const std::string &mensaje)
         std::cerr << "Error " << mysql_errno (my_con);
         std::cerr << "(" << mysql_sqlstate (my_con);
         std::cerr << "): " << mysql_error (my_con) << std::endl;
+    }
+}
+
+void print_mysql_stmt_error (MYSQL_STMT *stmt, const std::string &mensaje)
+{
+    std::cerr << mensaje << std::endl;
+
+    if (stmt != NULL) {
+        std::cerr << "Error " << mysql_stmt_errno (stmt);
+        std::cerr << "(" << mysql_stmt_sqlstate (stmt);
+        std::cerr << "): " << mysql_stmt_error (stmt) << std::endl;
     }
 }
 
@@ -153,12 +166,79 @@ bool verificar_tablas(MYSQL *my_con)
     return true;
 }
 
+bool cli_to_csv()
+{
+    std::vector<Cliente>    lista_clientes;
+
+    std::fstream            fichero;        // Manejo el fichero.
+
+    std::cout << "Leyendo fichero de clientes... " << std::endl;
+    if(!leerClientesGID("c:/cli.txt", lista_clientes)) {
+        std::cout << "\tNo se ha podido leer el fichero de clientes." << std::endl;
+        return false;
+    }
+    else {
+        std::cout << "\tFichero de clientes leido. Total clientes: ";
+        std::cout << lista_clientes.size() << std::endl;
+    }
+
+    // Abrimos el fichero.
+    fichero.open("c:/clipb.csv", std::ios::out);
+
+    int i = 0;
+    for(auto c : lista_clientes) {
+        std::cout << "\rEscribiendo " << lista_clientes.size() << " clientes... ";
+        std::cout << utiles::to_string(++i, 6, ' ') << "/" << utiles::to_string(lista_clientes.size(), 6, ' ');
+
+        fichero << c.to_csv() << "\n";
+    }
+
+    fichero.close();
+
+    return true;
+}
+
+bool pro_to_csv()
+{
+    std::vector<Proveedor>  lista_proveedores;
+
+    std::fstream            fichero;        // Manejo el fichero.
+
+    std::cout << "Leyendo fichero de proveedores... " << std::endl;
+    if(!leerProveedoresGID("c:/pro.txt", lista_proveedores)) {
+        std::cout << "\tNo se ha podido leer el fichero de proveedores." << std::endl;
+        return false;
+    }
+    else {
+        std::cout << "\tFichero de proveedores leido. Total proveedores: ";
+        std::cout << lista_proveedores.size() << std::endl;
+    }
+
+    // Abrimos el fichero.
+    fichero.open("c:/propb.csv", std::ios::out);
+
+    // Encabezado.
+    fichero << "codigo;tipo;razon_social;domicilio;codigo_postal;poblacion_provincia;cif;tel1;tel2;fax;forma_pago;banco;" << "\n";
+
+    int i = 0;
+    for(auto p : lista_proveedores) {
+        std::cout << "\rEscribiendo " << lista_proveedores.size() << " proveedores... ";
+        std::cout << utiles::to_string(++i, 6, ' ') << "/" << utiles::to_string(lista_proveedores.size(), 6, ' ');
+
+        fichero << p.to_csv() << "\n";
+    }
+
+    fichero.close();
+
+    return true;
+}
+
 bool revisar_clientes(MYSQL *my_con)
 {
     // Plan:
     //  1. Leer los clientes del archivo, almacenarlos en una lista.
     //  2. Comprobar, uno por uno, si existen en la base de datos.
-    //      2.a. Si existe, a la lista de clientes a actulizar.
+    //      2.a. Si existe, a la lista de clientes a actualizar.
     //      2.b. Si no existe, a la lista de clientes a insertar.
     //  3. Si hay clientes que actualizar, hacerlo.
     //  4. Si hay clientes que insertar, hacerlo.
@@ -186,38 +266,13 @@ bool revisar_clientes(MYSQL *my_con)
         }
     }
 
-    // Actualización de cliente.
-    std::cout << "\n\n";
-    int i = 0;
-    for(auto c : clientes_actualizar) {
+    // Actualización de clientes.
+    if(clientes_actualizar.size() > 0)
+        actualizar_clientes(my_con, clientes_actualizar);
 
-        std::cout << "\rActualizando " << clientes_actualizar.size() << " clientes... ";
-        std::cout << utiles::to_string(++i) << "/" << clientes_actualizar.size();
-
-        std::string consulta = c.get_mysql_update();
-
-        if(mysql_query(my_con, consulta.c_str())) {
-            std::string err_string("Error al actualizar cliente " + utiles::IntToStr(c.codigo));
-            print_mysql_error(my_con, err_string);
-        }
-    }
-    std::cout << " ... Hecho." << std::endl;
-
-    std::cout << "\n\n";
-    i = 0;
-    for(auto c : clientes_insertar) {
-
-        std::cout << "\rInsertando " << clientes_insertar.size() << " clientes... ";
-        std::cout << utiles::to_string(++i) << "/" << clientes_insertar.size();
-
-        std::string consulta = c.get_mysql_insert();
-
-        if(mysql_query(my_con, consulta.c_str())) {
-            std::string err_string("Error al insertar cliente " + utiles::IntToStr(c.codigo));
-            print_mysql_error(my_con, err_string);
-        }
-    }
-    std::cout << "Hecho." << std::endl;
+    // Inserción de clientes
+    if(clientes_insertar.size() > 0)
+        insertar_clientes(my_con, clientes_insertar);
 
     return true;
 }
@@ -375,7 +430,7 @@ bool extraerDatosBlInfCli(BloqueInfoCliente bic_info, Cliente &datos_cliente)
     datos_cliente.razon_social.assign(bic_info.linea_nombre, 14, 40);
     utiles::trim(datos_cliente.razon_social);
     //utiles::setTextToISO20022(datos_cliente.razon_social);
-    utiles::GID_to_UTF8(datos_cliente.razon_social);
+    //utiles::GID_to_UTF8(datos_cliente.razon_social);
 
     // Teléfono 1.
     datos_cliente.tel1.assign(bic_info.linea_nombre, 57, 12);
@@ -386,7 +441,7 @@ bool extraerDatosBlInfCli(BloqueInfoCliente bic_info, Cliente &datos_cliente)
     datos_cliente.domicilio.assign(bic_info.linea_domicilio, 14, 40);
     utiles::trim(datos_cliente.domicilio);
     //utiles::setTextToISO20022(datos_cliente.domicilio);
-    utiles::GID_to_UTF8(datos_cliente.domicilio);
+    //utiles::GID_to_UTF8(datos_cliente.domicilio);
 
     // Teléfono 2.
     datos_cliente.tel2.assign(bic_info.linea_domicilio, 57, 12);
@@ -440,6 +495,79 @@ bool extraerDatosBlInfCli(BloqueInfoCliente bic_info, Cliente &datos_cliente)
 	return true;
 }
 
+bool extraerDatosBlInfPro(BloqueInfoProveedor bip_info, Proveedor &datos_proveedor)
+{
+    std::string iban,
+                ccc,
+                bic;
+
+    // Linea: CODIGO
+    // Leemos el código del cliente, y lo convertimos a int.
+    datos_proveedor.codigo = utiles::StrToInt(bip_info.linea_codigo.substr(14, 4));
+
+	// El tipo, también a int.
+	datos_proveedor.tipo = bip_info.linea_codigo.substr(24, 1)[0];
+
+    // Linea: NOMBRE
+    // La razón social del proveedor.
+    datos_proveedor.razon_social.assign(bip_info.linea_nombre, 14, 40);
+    utiles::trim(datos_proveedor.razon_social);
+    utiles::GID_to_LATIN(datos_proveedor.razon_social);
+
+    // El teléfono 1.
+    datos_proveedor.tel1.assign(bip_info.linea_nombre, 57, 12);
+    utiles::trim(datos_proveedor.tel1);
+
+    // Linea: DOMICILIO
+    // El domicilio.
+    datos_proveedor.domicilio.assign(bip_info.linea_domicilio, 14, 40);
+    utiles::trim(datos_proveedor.razon_social);
+    utiles::GID_to_LATIN(datos_proveedor.razon_social);
+
+    // El teléfono 2.
+    datos_proveedor.tel2.assign(bip_info.linea_domicilio, 57, 12);
+    utiles::trim(datos_proveedor.tel2);
+
+    // Linea: POBLACION
+    // Extraemos pobalcion y provincia.
+    extraerPobProv(
+        bip_info.linea_poblacion.substr(14, 40),
+        datos_proveedor.poblacion,
+        datos_proveedor.provincia
+    );
+
+    // Y el fax.
+    datos_proveedor.fax.assign(bip_info.linea_poblacion, 57, 12);
+    utiles::trim(datos_proveedor.fax);
+
+    // Linea: COD.POST
+    // El código postal.
+    datos_proveedor.codigo_postal.assign(bip_info.linea_c_postal, 14, 5);
+    // Cambiamos los espacios en blanco, si los hay, por 0.
+    for(size_t i = 0; i < datos_proveedor.codigo_postal.size(); ++i)
+        if(datos_proveedor.codigo_postal[i] == ' ')
+            datos_proveedor.codigo_postal[i] = '0';
+
+    // Y el CIF.
+    datos_proveedor.cif.assign(bip_info.linea_c_postal, 38, 16);
+    utiles::trim(datos_proveedor.cif);
+    // Eliminamos el guion o los espacios en blanco del CIF, si los hay.
+    for(size_t i = 0; i < datos_proveedor.cif.size(); ++i)
+        if(datos_proveedor.cif[i] == '-' || datos_proveedor.cif[i] == ' ')
+            datos_proveedor.cif.erase(i, 1);
+
+    // Linea FORMA PAGO
+    // La forma de pago.
+    datos_proveedor.forma_pago = utiles::StrToInt(bip_info.linea_f_pago.substr(14, 2));
+
+    // Linea BANCO
+    // El código del banco.
+    datos_proveedor.banco = utiles::StrToInt(bip_info.linea_banco.substr(14, 4));
+
+    // Todo correcto.
+	return true;
+}
+
 void extraerPobProv(std::string origen, std::string &poblacion, std::string &provincia)
 {
     int     inicio_provincia = 0,
@@ -484,13 +612,95 @@ void extraerPobProv(std::string origen, std::string &poblacion, std::string &pro
         utiles::trim(poblacion);
     }
 
-    utiles::GID_to_UTF8(poblacion);
-    utiles::GID_to_UTF8(provincia);
+    //utiles::GID_to_UTF8(poblacion);
+    //utiles::GID_to_UTF8(provincia);
+    utiles::GID_to_LATIN(poblacion);
+    utiles::GID_to_LATIN(provincia);
+}
+
+bool leerProveedoresGID(std::string nombre_fichero, std::vector<Proveedor> &lista_proveedores)
+{
+    std::fstream        fichero;            // Manejo el fichero.
+    bool                codigo;             // Indicara si tenemos codigo o no.
+    BloqueInfoProveedor bip_info;           // Almacenaremos la informacion leida
+                                            // para despues procesarla.
+    Proveedor           datos_proveedor;    // Datos a insertar en la BBDD.
+    std::string         linea_fichero;      // Para la lectura del fichero.
+
+    // Abrimos el fichero.
+    fichero.open(nombre_fichero.c_str(), std::ios::in);
+
+    if(!fichero.good())
+        // Imposible abrir el fichero.
+        return false;
+
+	// Procesamos los clientes
+	while(!fichero.eof()) // Hasta fin de fichero.
+	{
+	    codigo = false;
+		do // Mientras que no encontremos un cliente.
+		{
+			std::getline(fichero, linea_fichero);
+
+            if(linea_fichero.length() > 10) // Linea con datos, no en blanco.
+                if(linea_fichero.substr(2, 10).compare("CODIGO....") == 0)
+                    codigo = true;
+
+        } while(!codigo && !fichero.eof());
+
+		if(!fichero.eof()) // Nos aseguramos de que no estamos en el final del fichero.
+		{
+		    // Copiamos los datos de la primera linea al almacen
+		    bip_info.linea_codigo.assign(linea_fichero);
+
+            // Seguimos con el resto de lineas.
+
+            // Linea NOMBRE....
+            if(!leerLineaTXTGID(fichero, bip_info.linea_nombre, std::string("NOMBRE....")))
+                return false;
+
+            // Linea DOMICILIO.
+            if(!leerLineaTXTGID(fichero, bip_info.linea_domicilio, std::string("DOMICILIO.")))
+                return false;
+
+            // Linea POBLACION.
+            if(!leerLineaTXTGID(fichero, bip_info.linea_poblacion, std::string("POBLACION.")))
+                return false;
+
+            // Linea COD.POST..
+            if(!leerLineaTXTGID(fichero, bip_info.linea_c_postal, std::string("COD.POST..")))
+                return false;
+
+            // Linea FORMA PAGO
+            if(!leerLineaTXTGID(fichero, bip_info.linea_f_pago, std::string("FORMA PAGO")))
+                return false;
+
+            // Linea BANCO.....
+            if(!leerLineaTXTGID(fichero, bip_info.linea_banco, std::string("BANCO.....")))
+                return false;
+
+            // Limpiamos el almacen de datos.
+            datos_proveedor.limpiar();
+
+            // Extraemos los datos.
+            if(!extraerDatosBlInfPro(bip_info, datos_proveedor))
+                return false;
+
+            // Insertamos los datos en la lista.
+            lista_proveedores.push_back(datos_proveedor);
+		}
+	}
+
+	// Cerramos el fichero.
+	fichero.close();
+
+    // Proceso correcto.
+	return true;
 }
 
 int get_datos_cliente(MYSQL *my_con, int codigo, Cliente &c)
 {
-    std::string     consulta = "SELECT * FROM cliente WHERE COD_CLIENTE=" + utiles::IntToStr(codigo, 6);
+    std::string     consulta = "SELECT * FROM cliente WHERE COD_CLIENTE=" + utiles::to_string(codigo, 6);
     MYSQL_RES       *resultado;
     MYSQL_ROW       fila;
 
@@ -558,7 +768,7 @@ int get_datos_cliente(MYSQL *my_con, int codigo, Cliente &c)
 
 int update_datos_cliente(MYSQL *my_con, const Cliente &c)
 {
-    std::string     consulta = c.get_mysql_update();
+    std::string     consulta = c.get_mysql_update_str();
 
     if(mysql_query(my_con, consulta.c_str()) != 0) {
         print_mysql_error(my_con, "Fallo al actualizar cliente.");
@@ -566,4 +776,233 @@ int update_datos_cliente(MYSQL *my_con, const Cliente &c)
     }
 
     return 0;
+}
+
+bool insertar_clientes(MYSQL *my_con, std::vector<Cliente> &lista_clientes)
+{
+    MYSQL_STMT          *stmt;          // Manejador de la consulta preparada.
+    MYSQL_BIND          my_bind[14];    // Estructura para los datos de la consulta.
+    data_bind_storage   cmb(db_consts::cliente_nc_txt,      // Reservamos espacio para
+                            db_consts::cliente_nc_int,      // almacenar los datos
+                            db_consts::cliente_max_txt);    // de un cliente.
+
+    // Ponemos la estructura para los datos a 0.
+    std::memset(static_cast<void *>(my_bind), 0, sizeof(my_bind));
+
+    // Reservamos manejador
+    if((stmt = mysql_stmt_init(my_con)) == NULL)
+    {
+        print_mysql_error(my_con, "Imposible inicializar el manejador de la consulta.");
+        return false;
+    }
+
+    // Preparamos la consulta.
+    if(mysql_stmt_prepare(stmt, db_queries::ins_cliente.c_str(), db_queries::ins_cliente.size()) != 0)  {
+        print_mysql_stmt_error(stmt, "Imposible preparar consulta INSERT.");
+        return false;
+    }
+
+    // Asociamos la estructura my_bind al almacen de datos.
+    set_mysql_bind(my_bind, cmb, db_binds::cliente_ins_bind);
+
+    // Asociamos los datos a la consulta.
+    if(mysql_stmt_bind_param(stmt, my_bind) != 0) {
+        print_mysql_stmt_error(stmt, "Imposible asociar los datos a la consulta.");
+        return false;
+    }
+
+    int i = 1;
+    for(auto &&c : lista_clientes) {
+        std::cout << "\rInsertando " << lista_clientes.size() << " clientes... ";
+        std::cout << utiles::to_string(i, 6, ' ') << "/" << utiles::to_string(lista_clientes.size(), 6, ' ');
+
+        // Rellenamos el "receptaculo" con los datos del cliente. La estructura
+        // my_bind está asociada a esta otra estructura, luego la consulta enviará
+        // los datos de esta estructura a traves de la estructura my_bind.
+        c.fill_mysql_bind(cmb);
+
+        // Procesamos la consulta con los datos.
+        if(mysql_stmt_execute(stmt) != 0) {
+            print_mysql_stmt_error(stmt, "Imposible ejecutar consulta preparada.");
+            return false;
+        }
+
+        ++i;
+    }
+
+    std::cout << "\tHecho.\n\n";
+
+    if(mysql_stmt_close(stmt) != 0) {
+        print_mysql_stmt_error(stmt, "Imposible cerrar el manejador de la consulta.");
+        return false;
+    }
+
+    return true;
+}
+
+bool actualizar_clientes(MYSQL *my_con, std::vector<Cliente> &lista_clientes)
+{
+    MYSQL_STMT          *stmt;          // Manejador de la consulta preparada.
+    MYSQL_BIND          my_bind[14];    // Estructura para los datos de la consulta.
+    data_bind_storage   cmb(db_consts::cliente_nc_txt,      // Reservamos espacio para
+                            db_consts::cliente_nc_int,      // almacenar los datos
+                            db_consts::cliente_max_txt);    // de un cliente.
+
+    // Ponemos la estructura para los datos a 0.
+    std::memset(static_cast<void *>(my_bind), 0, sizeof(my_bind));
+
+    // Reservamos manejador
+    if((stmt = mysql_stmt_init(my_con)) == NULL)
+    {
+        print_mysql_error(my_con, "Imposible inicializar el manejador de la consulta.");
+        return false;
+    }
+
+    // Preparamos la consulta.
+    if(mysql_stmt_prepare(stmt, db_queries::upd_cliente.c_str(), db_queries::upd_cliente.size()) != 0)  {
+        print_mysql_stmt_error(stmt, "Imposible preparar consulta UPDATE.");
+        return false;
+    }
+
+    // Asociamos la estructura my_bind al almacen de datos.
+    set_mysql_bind(my_bind, cmb, db_binds::cliente_upd_bind);
+
+    // Asociamos los datos a la consulta.
+    if(mysql_stmt_bind_param(stmt, my_bind) != 0) {
+        print_mysql_stmt_error(stmt, "Imposible asociar los datos a la consulta.");
+        return false;
+    }
+
+    int i = 1;
+    for(auto &&c : lista_clientes) {
+        std::cout << "\rActualizando " << lista_clientes.size() << " clientes... ";
+        std::cout << utiles::to_string(i, 6, ' ') << "/" << utiles::to_string(lista_clientes.size(), 6, ' ');
+
+        // Rellenamos el "receptaculo" con los datos del cliente. La estructura
+        // my_bind está asociada a esta otra estructura, luego la consulta enviará
+        // los datos de esta estructura a traves de la estructura my_bind.
+        c.fill_mysql_bind(cmb);
+
+        // Procesamos la consulta con los datos.
+        if(mysql_stmt_execute(stmt) != 0) {
+            print_mysql_stmt_error(stmt, "Imposible ejecutar consulta preparada.");
+            return false;
+        }
+
+        ++i;
+    }
+
+    std::cout << "\tHecho.\n\n";
+
+    mysql_stmt_close(stmt);
+
+    return true;
+}
+
+//bool set_insert_client_struct(MYSQL_BIND *my_bind, cliente_mysql_bind &data)
+bool set_insert_client_struct(MYSQL_BIND *my_bind, data_bind_storage &data)
+{
+    int     str_count = 0,  // Cadenas copiadas.
+            int_count = 0;  // Enteros copiados.
+
+    // El orden de los campos depende de la consulta.
+    for(size_t i = 0; i < 14; ++i) {
+        if((i == 0) || (i ==  10) || (i == 11)) {
+            // Enteros. Asignamos y seguimos.
+            my_bind[i].buffer_type  = MYSQL_TYPE_LONG;
+            my_bind[i].buffer       = static_cast<void *>(&data.int_data[int_count]);
+
+            ++int_count;
+        }
+        else {
+            // Cadenas de caracteres.
+            my_bind[i].buffer_type     = MYSQL_TYPE_STRING;
+            // Indicamos la direccion del primer caracter de la cadena, para
+            // asegurarnos de que buffer contiene la dirección correcta.
+            my_bind[i].buffer          = static_cast<void *>(&data.str_data[str_count][0]);
+            my_bind[i].buffer_length   = 40;
+            my_bind[i].is_null         = 0;
+            my_bind[i].length          = &data.str_long[str_count];
+
+            ++str_count;
+        }
+    }
+
+    return true;
+}
+
+//bool set_update_client_struct(MYSQL_BIND *my_bind, cliente_mysql_bind &data)
+bool set_update_client_struct(MYSQL_BIND *my_bind, data_bind_storage &data)
+{
+    int     str_count = 0,  // Cadenas copiadas.
+            int_count = 1;  // Enteros copiados. A 1 porque dejamos el primero para el final.
+
+    // El orden de los campos depende de la consulta.
+    for(size_t i = 0; i < 13; ++i) { // Ignoramos el ultimo campo, queda para el final.
+        if((i ==  9) || (i == 10))  {
+            // Enteros. Asignamos y seguimos.
+            my_bind[i].buffer_type  = MYSQL_TYPE_LONG;
+            my_bind[i].buffer       = static_cast<void *>(&data.int_data[int_count]);
+
+            ++int_count;
+        }
+        else {
+            // Cadenas de caracteres.
+            my_bind[i].buffer_type     = MYSQL_TYPE_STRING;
+            // Indicamos la direccion del primer caracter de la cadena, para
+            // asegurarnos de que buffer contiene la dirección correcta.
+            my_bind[i].buffer          = static_cast<void *>(&data.str_data[str_count][0]);
+            my_bind[i].buffer_length   = 40;
+            my_bind[i].is_null         = 0;
+            my_bind[i].length          = &data.str_long[str_count];
+
+            ++str_count;
+        }
+    }
+
+    // Ahora solo nos queda el último, el codigo de cliente, que esta
+    // en la posicion 0 de la matriz int_data.
+    my_bind[13].buffer_type   = MYSQL_TYPE_LONG;
+    my_bind[13].buffer        = static_cast<void *>(&data.int_data[0]);
+
+    return true;
+}
+
+bool set_mysql_bind(MYSQL_BIND *my_bind, data_bind_storage &data, const std::vector<info_campo> &info_bind)
+{
+
+    for(size_t i = 0; i < info_bind.size(); ++i) {
+        switch(info_bind[i].data_type) {
+            case tipo_campo::IS_INT :
+                // Tipo de dato: entero.
+                my_bind[info_bind[i].bind_pos].buffer_type = MYSQL_TYPE_LONG;
+
+                // Asociacion al buffer correcto
+                my_bind[info_bind[i].bind_pos].buffer =
+                    static_cast<void *>(&data.int_data[info_bind[i].data_pos]);
+
+                break;
+            case tipo_campo::IS_TXT :
+                // Tipo de dato: cadenas de caracteres.
+                my_bind[info_bind[i].bind_pos].buffer_type = MYSQL_TYPE_STRING;
+
+                // Indicamos la direccion del primer caracter de la cadena, para
+                // asegurarnos de que buffer contiene la dirección correcta.
+                my_bind[info_bind[i].bind_pos].buffer =
+                    static_cast<void *>(&data.str_data[info_bind[i].data_pos][0]);
+
+                my_bind[info_bind[i].bind_pos].buffer_length    = 40; /// QUE HAGO CON ESTO?
+                my_bind[info_bind[i].bind_pos].is_null          = 0;
+
+                my_bind[info_bind[i].bind_pos].length =
+                    &data.str_long[info_bind[i].data_pos];
+
+                break;
+            case tipo_campo::IS_DEC :
+                /// TO DO ///
+                break;
+        }
+    }
+
+    return true;
 }

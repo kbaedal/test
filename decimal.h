@@ -352,9 +352,8 @@ class decimal {
             *this = d;
         }
 
-        // Formats the decimal as a string.
-        // With format = false, it shows all cyphers, even non-significant zeros.
-        std::string to_str(bool format = true) const;
+        // Formats the decimal as a string. See status for formmating options.
+        std::string to_str(const char dec_coma = '.') const;
 
         // Formats the decimal as a string with economics look, adding decimal point
         // and separator comas in every place needed.
@@ -375,6 +374,14 @@ class decimal {
         // Returns a 0 filled decimal.
         decimal zero() const;
 
+        // Cambia los flags del decimal, excepto los intocables (signo, overflow)
+        void set_status(uint8_t ne)
+        {
+            ne      &= 0xFC;    // Limpiamos los dos ultimos bits, intocables por esta funcion.
+            status  &= 0x03;    // Mantenemos intactos únicamente los intocables.
+            status  |= ne;      // Añadimos los bits del nuevo status.
+        }
+
     private:
         uint8_t *buffer;            // PBCD data storage.
 
@@ -387,6 +394,13 @@ class decimal {
         uint8_t status;             // Flags de status del decimal.
                                     // Bit 0: Signo (0 positivo, 1 negativo).
                                     // Bit 1: Overflow (0 no hay, 1 sí hay).
+                                    // Bit 2: Imprimir signo (1 sí, 0 sólo negativo).
+                                    // Bit 3: Formateo (1 imprime todo, 0 solo cifras significativas).
+
+                                    // Bit 4:
+                                    // Bit 5:
+                                    // Bit 6:
+                                    // Bit 7:
 
         // Convierte el número a formato interno.
         void convertir(const std::string &str);
